@@ -10,10 +10,10 @@
     </linearGradient>
   </defs>
 
-  <rect width="512" height="512" rx="96" fill="#bfe3fb" />
+  <rect width="512" height="512" rx="96" fill="#1e2a8c" />
 
   <g clip-path="url(#roundedClip)">
-    <polygon points="349,116 349,326 69,326" fill="none" stroke="url(#rod)" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" />
-    <polygon points="349,116 349,326 69,326" fill="none" stroke="#fff6de" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity="0.8" />
+    <polygon points="396,151 396,361 116,361" fill="none" stroke="url(#rod)" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" />
+    <polygon points="396,151 396,361 116,361" fill="none" stroke="#fff6de" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85" />
   </g>
 </svg>
