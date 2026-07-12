@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Triangle Solver</title>
+  <meta name="description" content="Enter any 3 sides and/or angles of a triangle and solve the rest." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Triangle" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>Triangle Solver</h1>
+
+    <svg id="triangle-svg" class="triangle-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Triangle diagram"></svg>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <div id="solution-toggle" class="solution-toggle" hidden>
+      <button type="button" class="active" data-solution="0">Solution 1</button>
+      <button type="button" data-solution="1">Solution 2</button>
+    </div>
+
+    <div id="results" class="results" aria-live="polite"></div>
+
+    <form class="inputs" autocomplete="off">
+      <fieldset>
+        <legend>Sides</legend>
+        <div class="field">
+          <label for="side-a">a</label>
+          <input id="side-a" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
+        </div>
+        <div class="field">
+          <label for="side-b">b</label>
+          <input id="side-b" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
+        </div>
+        <div class="field">
+          <label for="side-c">c</label>
+          <input id="side-c" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Angles (°)</legend>
+        <div class="field">
+          <label for="angle-alpha">α</label>
+          <input id="angle-alpha" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
+        </div>
+        <div class="field">
+          <label for="angle-beta">β</label>
+          <input id="angle-beta" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
+        </div>
+        <div class="field">
+          <label for="angle-gamma">γ</label>
+          <input id="angle-gamma" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
+        </div>
+      </fieldset>
+
+      <button type="button" id="reset-btn" class="reset-btn">Reset</button>
+    </form>
+
+    <p class="hint">Side <b>a</b> is opposite angle <b>α</b>, <b>b</b> opposite <b>β</b>, <b>c</b> opposite <b>γ</b>.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
