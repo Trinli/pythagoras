@@ -3,53 +3,17 @@
     <clipPath id="roundedClip">
       <rect x="0" y="0" width="512" height="512" rx="96" />
     </clipPath>
-    <linearGradient id="stoneGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ddd6c8" />
-      <stop offset="1" stop-color="#a89f8c" />
+    <linearGradient id="rod" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f9dd8f" />
+      <stop offset="0.5" stop-color="#d9a53d" />
+      <stop offset="1" stop-color="#a06e1c" />
     </linearGradient>
-    <filter id="grain" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="11" result="n" />
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.32  0 0 0 0 0.29  0 0 0 0 0.24  0 0 0 0.4 0" />
-    </filter>
   </defs>
 
-  <rect width="512" height="512" rx="96" fill="url(#stoneGrad)" />
+  <rect width="512" height="512" rx="96" fill="#bfe3fb" />
 
   <g clip-path="url(#roundedClip)">
-    <rect width="512" height="512" filter="url(#grain)" opacity="0.55" />
-
-    <!-- engraved outer frame -->
-    <rect x="30" y="30" width="452" height="452" rx="74" fill="none" stroke="#726b5b" stroke-width="7" transform="translate(3,3)" opacity="0.55" />
-    <rect x="30" y="30" width="452" height="452" rx="74" fill="none" stroke="#f7f2e5" stroke-width="7" transform="translate(-3,-3)" opacity="0.6" />
-
-    <!-- right triangle groove, 3:4:5 proportions -->
-    <path d="M150,140 L430,350 L150,350 Z" fill="none" stroke="#726b5b" stroke-width="10" stroke-linejoin="round" transform="translate(3.5,3.5)" opacity="0.65" />
-    <path d="M150,140 L430,350 L150,350 Z" fill="none" stroke="#f7f2e5" stroke-width="10" stroke-linejoin="round" transform="translate(-3.5,-3.5)" opacity="0.65" />
-
-    <!-- right-angle mark groove -->
-    <polyline points="150,316 184,316 184,350" fill="none" stroke="#726b5b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(2.5,2.5)" opacity="0.6" />
-    <polyline points="150,316 184,316 184,350" fill="none" stroke="#f7f2e5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" transform="translate(-2.5,-2.5)" opacity="0.6" />
-
-    <!-- vertex drill-marks -->
-    <circle cx="150" cy="140" r="15" fill="#726b5b" opacity="0.45" />
-    <circle cx="150" cy="140" r="9" fill="#8a8271" />
-    <circle cx="430" cy="350" r="15" fill="#726b5b" opacity="0.45" />
-    <circle cx="430" cy="350" r="9" fill="#8a8271" />
-
-    <!-- Greek key (meander) groove -->
-    <path d="M64,456 L64,408 L96,408 L96,440 L80,440 L80,424 L112,424 L112,456 L128,456
-             L128,408 L160,408 L160,440 L144,440 L144,424 L176,424 L176,456 L192,456
-             L192,408 L224,408 L224,440 L208,440 L208,424 L240,424 L240,456 L256,456
-             L256,408 L288,408 L288,440 L272,440 L272,424 L304,424 L304,456 L320,456
-             L320,408 L352,408 L352,440 L336,440 L336,424 L368,424 L368,456 L384,456
-             L384,408 L416,408 L416,440 L400,440 L400,424 L432,424 L432,456 L448,456"
-          fill="none" stroke="#726b5b" stroke-width="11" stroke-linecap="square" stroke-linejoin="miter" transform="translate(2.5,2.5)" opacity="0.55" />
-    <path d="M64,456 L64,408 L96,408 L96,440 L80,440 L80,424 L112,424 L112,456 L128,456
-             L128,408 L160,408 L160,440 L144,440 L144,424 L176,424 L176,456 L192,456
-             L192,408 L224,408 L224,440 L208,440 L208,424 L240,424 L240,456 L256,456
-             L256,408 L288,408 L288,440 L272,440 L272,424 L304,424 L304,456 L320,456
-             L320,408 L352,408 L352,440 L336,440 L336,424 L368,424 L368,456 L384,456
-             L384,408 L416,408 L416,440 L400,440 L400,424 L432,424 L432,456 L448,456"
-          fill="none" stroke="#f7f2e5" stroke-width="11" stroke-linecap="square" stroke-linejoin="miter" transform="translate(-2.5,-2.5)" opacity="0.55" />
+    <polygon points="349,116 349,326 69,326" fill="none" stroke="url(#rod)" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" />
+    <polygon points="349,116 349,326 69,326" fill="none" stroke="#fff6de" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity="0.8" />
   </g>
 </svg>
