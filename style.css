@@ -45,7 +45,7 @@ html, body {
 .triangle-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 504 / 434;
+  aspect-ratio: 540 / 470;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -97,44 +97,80 @@ html, body {
   transform: translate(-50%, -50%);
 }
 
-.tri-input.tri-input-angle {
-  width: clamp(4rem, 15cqw, 5.3rem);
-}
-
-.tri-angle-wrap {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-.deg-suffix {
-  font-size: clamp(1.1rem, 4.6cqw, 1.4rem);
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.tri-angle-wrap.given .deg-suffix {
-  color: var(--accent);
-}
-
-.tri-input:focus {
+.tri-input-standalone:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-.tri-input.given {
+.tri-input-standalone.given {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   color: var(--accent);
   font-weight: 700;
 }
 
-.tri-input.computed {
+.tri-input-standalone.computed {
   color: var(--text-dim);
   border-style: dashed;
+}
+
+/* Angle fields: the wrapper is the visible box, so the number and the °
+   sign sit inside the same box together, right next to each other. */
+.tri-angle-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  width: clamp(5.4rem, 19cqw, 6.7rem);
+  padding: clamp(0.3rem, 1.8cqw, 0.55rem) 0.3rem;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.tri-angle-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.tri-angle-wrap.given {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.tri-angle-wrap.computed {
+  border-style: dashed;
+}
+
+.tri-input.tri-input-angle {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  text-align: right;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.deg-suffix {
+  flex: 0 0 auto;
+  font-size: clamp(0.9rem, 4.6cqw, 1.3rem);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tri-angle-wrap.given .tri-input-angle,
+.tri-angle-wrap.given .deg-suffix {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.tri-angle-wrap.computed .tri-input-angle,
+.tri-angle-wrap.computed .deg-suffix {
+  color: var(--text-dim);
 }
 
 .status {
