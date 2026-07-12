@@ -21,11 +21,18 @@
     <div class="triangle-wrap" id="triangle-wrap">
       <svg id="triangle-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Triangeldiagram"></svg>
 
-      <input id="input-a" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
-      <input id="input-b" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
-      <input id="input-c" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Hypotenusa" />
-      <input id="input-alpha" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
-      <input id="input-beta" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
+      <input id="input-a" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
+      <input id="input-b" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
+      <input id="input-c" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Hypotenusa" />
+
+      <div class="tri-angle-wrap" id="wrap-alpha">
+        <input id="input-alpha" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
+        <span class="deg-suffix">°</span>
+      </div>
+      <div class="tri-angle-wrap" id="wrap-beta">
+        <input id="input-beta" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
+        <span class="deg-suffix">°</span>
+      </div>
     </div>
 
     <p id="status" class="status" role="status" aria-live="polite"></p>

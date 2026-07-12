@@ -49,6 +49,7 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
+  container-type: inline-size;
 }
 
 .triangle-wrap svg {
@@ -80,21 +81,42 @@ html, body {
 }
 
 .tri-input {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 5.7rem;
-  padding: 0.55rem 0.25rem;
+  width: clamp(4.3rem, 16cqw, 5.7rem);
+  padding: clamp(0.3rem, 1.8cqw, 0.55rem) 0.2rem;
   text-align: center;
   border-radius: 10px;
   border: 2px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  font-size: 1.3rem;
+  font-size: clamp(0.9rem, 4.6cqw, 1.3rem);
   font-family: inherit;
 }
 
+.tri-input-standalone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
 .tri-input.tri-input-angle {
-  width: 5.3rem;
+  width: clamp(4rem, 15cqw, 5.3rem);
+}
+
+.tri-angle-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.deg-suffix {
+  font-size: clamp(1.1rem, 4.6cqw, 1.4rem);
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.tri-angle-wrap.given .deg-suffix {
+  color: var(--accent);
 }
 
 .tri-input:focus {

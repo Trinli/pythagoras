@@ -231,6 +231,16 @@ const inputEls = {
   alpha: document.getElementById('input-alpha'),
   beta: document.getElementById('input-beta'),
 };
+// Position/state target for each field: the input itself for sides, but the
+// wrapping element (input + °) for angles, so the ° suffix moves and styles
+// together with its input.
+const posEls = {
+  a: inputEls.a,
+  b: inputEls.b,
+  c: inputEls.c,
+  alpha: document.getElementById('wrap-alpha'),
+  beta: document.getElementById('wrap-beta'),
+};
 const FIELD_META = {
   a: { group: 'sides', index: 0 },
   b: { group: 'sides', index: 1 },
@@ -242,7 +252,7 @@ const FIELD_KEYS = Object.keys(FIELD_META);
 
 let givenFields = new Set();
 const trianglePoly = drawFixedTriangle(svg);
-positionFixedInputs(inputEls);
+positionFixedInputs(posEls);
 
 function setStatus(message, kind) {
   statusEl.textContent = message || '';
@@ -251,6 +261,11 @@ function setStatus(message, kind) {
 
 function setSolved(isSolved) {
   trianglePoly.classList.toggle('placeholder', !isSolved);
+}
+
+function setFieldClass(key, cls, on) {
+  inputEls[key].classList.toggle(cls, on);
+  if (posEls[key] !== inputEls[key]) posEls[key].classList.toggle(cls, on);
 }
 
 function readGivenValues() {
@@ -268,8 +283,8 @@ function readGivenValues() {
 function markFieldStyles() {
   for (const key of FIELD_KEYS) {
     const isGiven = givenFields.has(key);
-    inputEls[key].classList.toggle('given', isGiven);
-    if (isGiven) inputEls[key].classList.remove('computed');
+    setFieldClass(key, 'given', isGiven);
+    if (isGiven) setFieldClass(key, 'computed', false);
   }
 }
 
@@ -277,7 +292,7 @@ function clearComputedFields() {
   for (const key of FIELD_KEYS) {
     if (!givenFields.has(key)) {
       inputEls[key].value = '';
-      inputEls[key].classList.remove('computed');
+      setFieldClass(key, 'computed', false);
     }
   }
 }
@@ -286,12 +301,12 @@ function fillComputed(sides, angles) {
   ['a', 'b', 'c'].forEach((key, i) => {
     if (givenFields.has(key)) return;
     inputEls[key].value = fmt(sides[i]);
-    inputEls[key].classList.add('computed');
+    setFieldClass(key, 'computed', true);
   });
   ['alpha', 'beta'].forEach((key, i) => {
     if (givenFields.has(key)) return;
     inputEls[key].value = fmt(angles[i]);
-    inputEls[key].classList.add('computed');
+    setFieldClass(key, 'computed', true);
   });
 }
 
@@ -340,7 +355,8 @@ function handleFieldInput(key) {
 function handleReset() {
   for (const key of FIELD_KEYS) {
     inputEls[key].value = '';
-    inputEls[key].classList.remove('given', 'computed');
+    setFieldClass(key, 'given', false);
+    setFieldClass(key, 'computed', false);
   }
   givenFields = new Set();
   recompute();
