@@ -3,6 +3,7 @@
   --bg: #0f172a;
   --surface: #161f38;
   --border: #2a3655;
+  --field-border: #57699c;
   --text: #e5e9f5;
   --text-dim: #93a0c2;
   --accent: #38bdf8;
@@ -15,6 +16,7 @@
     --bg: #f4f6fb;
     --surface: #ffffff;
     --border: #dbe1ee;
+    --field-border: #96a5c4;
     --text: #16213a;
     --text-dim: #5b6785;
     --accent: #0284c7;
@@ -34,18 +36,18 @@ html, body {
 .app {
   max-width: 540px;
   margin: 0 auto;
-  padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom));
+  padding: 1rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.4rem;
+  gap: 1rem;
 }
 
 .triangle-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 500 / 570;
+  aspect-ratio: 520 / 640;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -81,14 +83,14 @@ html, body {
 }
 
 .tri-input {
-  width: clamp(4.7rem, 17cqw, 6.1rem);
+  width: clamp(5rem, 18cqw, 6.3rem);
   padding: clamp(0.3rem, 1.8cqw, 0.55rem) 0.2rem;
   text-align: center;
   border-radius: 10px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--field-border);
   background: var(--surface);
   color: var(--text);
-  font-size: clamp(1.05rem, 5cqw, 1.5rem);
+  font-size: clamp(1.15rem, 5.4cqw, 1.6rem);
   font-family: inherit;
 }
 
@@ -101,15 +103,16 @@ html, body {
    input keeps its own normal box (border/background/width), and the °
    sign is an overlay sitting inside the input's own right-hand padding —
    no flex/shrink tricks on the <input> itself, which some mobile browsers
-   handle unreliably. */
+   handle unreliably. Angles only ever show 3 digits (e.g. "53.1"), so the
+   box can be narrower than the length fields (which show 4, e.g. "12.34"). */
 .tri-angle-wrap {
   position: absolute;
   transform: translate(-50%, -50%);
 }
 
 .tri-input.tri-input-angle {
-  width: clamp(5.7rem, 20cqw, 7rem);
-  padding-right: 1.3rem;
+  width: clamp(5.3rem, 19cqw, 6.3rem);
+  padding-right: 1.35rem;
 }
 
 .deg-suffix {
@@ -118,7 +121,7 @@ html, body {
   right: 0.55rem;
   transform: translateY(-50%);
   pointer-events: none;
-  font-size: clamp(1rem, 4.6cqw, 1.35rem);
+  font-size: clamp(1.15rem, 5.4cqw, 1.6rem);
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -137,7 +140,7 @@ html, body {
 }
 
 .tri-input.computed {
-  color: var(--text-dim);
+  color: var(--text);
   border-style: dashed;
 }
 
@@ -146,7 +149,7 @@ html, body {
 }
 
 .tri-angle-wrap.computed .deg-suffix {
-  color: var(--text-dim);
+  color: var(--text);
 }
 
 .status {

@@ -20,6 +20,7 @@ function toRad(deg) { return (deg * Math.PI) / 180; }
 function toDeg(rad) { return (rad * 180) / Math.PI; }
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 function fmt(n) { return Math.round(n * 100) / 100; }
+function fmtAngle(n) { return Math.round(n * 10) / 10; }
 
 function lawOfCosinesAngles(sides) {
   const [a, b, c] = sides;
@@ -154,9 +155,9 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // The long leg is vertical (and the short leg horizontal) so the diagram is
 // taller than it is wide — that leaves more horizontal margin on the sides
 // for the input fields on a typical (portrait) phone screen.
-const LEG_A = 210; // bottom edge B–C, opposite vertex A (short leg, horizontal)
+const LEG_A = 160; // bottom edge B–C, opposite vertex A (short leg, horizontal)
 const LEG_B = 280; // right edge A–C, opposite vertex B (long leg, vertical)
-const PADDING = 145; // extra room around the shape for larger, easier-to-read inputs
+const PADDING = 180; // extra room around the shape for larger, easier-to-read inputs
 const FIXED_PTS = {
   A: { x: LEG_A, y: 0 },
   B: { x: 0, y: LEG_B },
@@ -214,11 +215,11 @@ function positionFixedInputs(inputEls) {
     el.style.top = `${top}%`;
   };
 
-  setPos(inputEls.a, away(mid(B, C), A, 54)); // side a connects B-C, opposite A
-  setPos(inputEls.b, away(mid(A, C), B, 54)); // side b connects A-C, opposite B
-  setPos(inputEls.c, away(mid(A, B), C, 54)); // side c (hypotenuse) connects A-B, opposite C
-  setPos(inputEls.alpha, outward(A, 70));
-  setPos(inputEls.beta, outward(B, 70));
+  setPos(inputEls.a, away(mid(B, C), A, 100)); // side a connects B-C, opposite A
+  setPos(inputEls.b, away(mid(A, C), B, 100)); // side b connects A-C, opposite B
+  setPos(inputEls.c, away(mid(A, B), C, 100)); // side c (hypotenuse) connects A-B, opposite C
+  setPos(inputEls.alpha, outward(A, 100));
+  setPos(inputEls.beta, outward(B, 100));
 }
 
 // ---- UI wiring ----
@@ -308,7 +309,7 @@ function fillComputed(sides, angles) {
   });
   ['alpha', 'beta'].forEach((key, i) => {
     if (givenFields.has(key)) return;
-    inputEls[key].value = fmt(angles[i]);
+    inputEls[key].value = fmtAngle(angles[i]);
     setFieldClass(key, 'computed', true);
   });
 }
