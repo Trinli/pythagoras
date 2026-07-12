@@ -1,8 +1,9 @@
-# Triangle Solver
+# Pythagoras
 
-A small standalone PWA: enter any 3 sides and/or angles of a triangle, and it
-computes the rest and draws the triangle to scale. See [requirements.md](requirements.md)
-for the full spec.
+A small standalone PWA that solves a right triangle: enter any 2 of its 5
+remaining values (2 legs, the hypotenuse, 2 acute angles — the right angle is
+always fixed at 90°), and it fills in the rest. See
+[requirements.md](requirements.md) for the full spec.
 
 No build step — it's plain HTML/CSS/JS.
 

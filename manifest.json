@@ -1,6 +1,6 @@
 {
-  "name": "Triangelräknare",
-  "short_name": "Triangel",
+  "name": "Pythagoras",
+  "short_name": "Pythagoras",
   "description": "Räkna ut sidor och vinklar i en rätvinklig triangel.",
   "start_url": ".",
   "scope": ".",

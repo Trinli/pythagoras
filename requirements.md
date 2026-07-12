@@ -1,4 +1,4 @@
-# Triangle Solver PWA — Requirements
+# Pythagoras — Requirements
 
 ## 1. Overview
 
