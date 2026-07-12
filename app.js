@@ -153,7 +153,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // Fixed 3-4-5 triangle, right angle (C) at bottom-right. Never recomputed.
 const LEG_A = 280; // bottom edge B–C, opposite vertex A
 const LEG_B = 210; // right edge A–C, opposite vertex B
-const PADDING = 130; // extra room around the shape for larger, easier-to-read inputs
+const PADDING = 145; // extra room around the shape for larger, easier-to-read inputs
 const FIXED_PTS = {
   A: { x: LEG_A, y: 0 },
   B: { x: 0, y: LEG_B },
@@ -211,11 +211,11 @@ function positionFixedInputs(inputEls) {
     el.style.top = `${top}%`;
   };
 
-  setPos(inputEls.a, away(mid(B, C), A, 48)); // side a connects B-C, opposite A
-  setPos(inputEls.b, away(mid(A, C), B, 48)); // side b connects A-C, opposite B
-  setPos(inputEls.c, away(mid(A, B), C, 48)); // side c (hypotenuse) connects A-B, opposite C
-  setPos(inputEls.alpha, outward(A, 62));
-  setPos(inputEls.beta, outward(B, 62));
+  setPos(inputEls.a, away(mid(B, C), A, 54)); // side a connects B-C, opposite A
+  setPos(inputEls.b, away(mid(A, C), B, 54)); // side b connects A-C, opposite B
+  setPos(inputEls.c, away(mid(A, B), C, 54)); // side c (hypotenuse) connects A-B, opposite C
+  setPos(inputEls.alpha, outward(A, 70));
+  setPos(inputEls.beta, outward(B, 70));
 }
 
 // ---- UI wiring ----
