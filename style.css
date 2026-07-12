@@ -68,12 +68,6 @@ h1 {
   opacity: 0.5;
 }
 
-.vertex-label {
-  fill: var(--text);
-  font-size: 18px;
-  font-weight: 600;
-}
-
 .angle-label {
   fill: var(--accent);
   font-size: 13px;
@@ -118,29 +112,6 @@ h1 {
   border-color: var(--accent);
   color: var(--accent);
 }
-
-.results {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.result-row {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.4rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-}
-.result-row.given { border-color: var(--accent); }
-.result-label { font-size: 0.8rem; color: var(--text-dim); }
-.result-value { font-size: 1rem; font-weight: 600; }
-.result-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); }
-.result-row.given .result-tag { color: var(--accent); }
 
 .inputs {
   display: flex;
@@ -189,6 +160,17 @@ legend {
 .field input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.field input.given {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.field input.computed {
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 .reset-btn {

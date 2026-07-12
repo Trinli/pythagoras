@@ -182,16 +182,10 @@ function renderTriangle(svg, sides, angles, { placeholder = false } = {}) {
 
   if (placeholder) return;
 
-  const vertexLabels = ['A', 'B', 'C'];
-
-  // Vertex + angle labels
+  // Angle labels, offset outward past each vertex so they never cross the triangle
   pts.forEach((p, i) => {
     const dir = normalize({ x: p.x - centroid.x, y: p.y - centroid.y });
-    const labelPos = { x: p.x + dir.x * 26, y: p.y + dir.y * 26 };
-    addText(svg, labelPos.x, labelPos.y, vertexLabels[i], 'vertex-label');
-
-    const inward = { x: -dir.x, y: -dir.y };
-    const anglePos = { x: p.x + inward.x * 34, y: p.y + inward.y * 34 };
+    const anglePos = { x: p.x + dir.x * 30, y: p.y + dir.y * 30 };
     addText(svg, anglePos.x, anglePos.y, `${fmt(angles[i])}°`, 'angle-label');
   });
 
@@ -227,147 +221,152 @@ function addText(svg, x, y, str, cls) {
 
 // ---- UI wiring ----
 
-const fieldIds = { sides: ['side-a', 'side-b', 'side-c'], angles: ['angle-alpha', 'angle-beta', 'angle-gamma'] };
-const labels = { sides: ['a', 'b', 'c'], angles: ['α', 'β', 'γ'] };
+const FIELD_META = {
+  'side-a': { group: 'sides', index: 0 },
+  'side-b': { group: 'sides', index: 1 },
+  'side-c': { group: 'sides', index: 2 },
+  'angle-alpha': { group: 'angles', index: 0 },
+  'angle-beta': { group: 'angles', index: 1 },
+  'angle-gamma': { group: 'angles', index: 2 },
+};
+const ALL_FIELD_IDS = Object.keys(FIELD_META);
+const DEFAULT_GIVEN = { 'angle-gamma': '90' };
 
 const svg = document.getElementById('triangle-svg');
 const statusEl = document.getElementById('status');
-const resultsEl = document.getElementById('results');
 const solutionToggle = document.getElementById('solution-toggle');
 const resetBtn = document.getElementById('reset-btn');
 
+let givenFields = new Set();
 let lastAmbiguous = null;
 let selectedSolution = 0;
 
 const PLACEHOLDER_SIDES = [3, 4, 5];
 const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
 
-function readInputs() {
-  const sides = fieldIds.sides.map((id) => {
-    const raw = document.getElementById(id).value.trim();
-    return raw === '' ? null : parseFloat(raw);
-  });
-  const angles = fieldIds.angles.map((id) => {
-    const raw = document.getElementById(id).value.trim();
-    return raw === '' ? null : parseFloat(raw);
-  });
-  return { sides, angles };
-}
-
-function countKnown(sides, angles) {
-  return sides.filter((v) => v != null && !Number.isNaN(v)).length + angles.filter((v) => v != null && !Number.isNaN(v)).length;
-}
-
 function setStatus(message, kind) {
   statusEl.textContent = message;
   statusEl.className = kind ? `status ${kind}` : 'status';
 }
 
-function clearResults() {
-  resultsEl.innerHTML = '';
+function readGivenValues() {
+  const sides = [null, null, null];
+  const angles = [null, null, null];
+  for (const id of givenFields) {
+    const meta = FIELD_META[id];
+    const value = parseFloat(document.getElementById(id).value);
+    if (meta.group === 'sides') sides[meta.index] = value;
+    else angles[meta.index] = value;
+  }
+  return { sides, angles };
+}
+
+function markFieldStyles() {
+  for (const id of ALL_FIELD_IDS) {
+    const el = document.getElementById(id);
+    el.classList.toggle('given', givenFields.has(id));
+  }
+}
+
+function clearComputedFields() {
+  for (const id of ALL_FIELD_IDS) {
+    if (!givenFields.has(id)) {
+      const el = document.getElementById(id);
+      el.value = '';
+      el.classList.remove('computed');
+    }
+  }
+}
+
+function fillComputed(sides, angles) {
+  ['side-a', 'side-b', 'side-c'].forEach((id, i) => {
+    if (givenFields.has(id)) return;
+    const el = document.getElementById(id);
+    el.value = fmt(sides[i]);
+    el.classList.add('computed');
+  });
+  ['angle-alpha', 'angle-beta', 'angle-gamma'].forEach((id, i) => {
+    if (givenFields.has(id)) return;
+    const el = document.getElementById(id);
+    el.value = fmt(angles[i]);
+    el.classList.add('computed');
+  });
+}
+
+function showSolution(sol) {
+  renderTriangle(svg, sol.sides, sol.angles);
+  fillComputed(sol.sides, sol.angles);
+}
+
+function recompute() {
+  markFieldStyles();
+  clearComputedFields();
   solutionToggle.hidden = true;
-}
-
-function renderResults(sides, angles, givenSides, givenAngles) {
-  resultsEl.innerHTML = '';
-  const rows = [
-    ...labels.sides.map((l, i) => ({ label: l, value: sides[i], given: givenSides[i] })),
-    ...labels.angles.map((l, i) => ({ label: l, value: angles[i], given: givenAngles[i] })),
-  ];
-  for (const row of rows) {
-    const div = document.createElement('div');
-    div.className = `result-row ${row.given ? 'given' : 'computed'}`;
-    div.innerHTML = `<span class="result-label">${row.label}</span><span class="result-value">${fmt(row.value)}${
-      labels.angles.includes(row.label) ? '°' : ''
-    }</span><span class="result-tag">${row.given ? 'given' : 'computed'}</span>`;
-    resultsEl.appendChild(div);
-  }
-}
-
-function applyResult(result, sides, angles) {
-  const givenSides = sides.map((v) => v != null && !Number.isNaN(v));
-  const givenAngles = angles.map((v) => v != null && !Number.isNaN(v));
-
-  if (result.status === 'ambiguous') {
-    lastAmbiguous = result;
-    selectedSolution = 0;
-    solutionToggle.hidden = false;
-    const sol = result.solutions[selectedSolution];
-    setStatus('Two triangles satisfy these values — pick a solution below.', 'ambiguous');
-    renderTriangle(svg, sol.sides, sol.angles);
-    renderResults(sol.sides, sol.angles, givenSides, givenAngles);
-    return;
-  }
-
   lastAmbiguous = null;
-  solutionToggle.hidden = true;
 
-  if (result.status === 'ok') {
-    setStatus('Triangle solved.', 'ok');
-    renderTriangle(svg, result.sides, result.angles);
-    renderResults(result.sides, result.angles, givenSides, givenAngles);
-  } else if (result.status === 'error') {
-    setStatus(result.message, 'error');
-    clearResults();
-    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
-  } else if (result.status === 'insufficient') {
-    setStatus(result.message, 'error');
-    clearResults();
-    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
-  }
-}
-
-function handleInputChange() {
-  const { sides, angles } = readInputs();
-  const known = countKnown(sides, angles);
-
+  const known = givenFields.size;
   if (known < 3) {
     setStatus(`Enter ${3 - known} more value${3 - known === 1 ? '' : 's'} (any mix of sides and angles).`);
-    clearResults();
     renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
   if (known > 3) {
     setStatus('Only 3 values are needed — clear one field.', 'error');
-    clearResults();
     renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
 
+  const { sides, angles } = readGivenValues();
   const result = solveTriangle(sides, angles);
-  applyResult(result, sides, angles);
+
+  if (result.status === 'ambiguous') {
+    lastAmbiguous = result;
+    selectedSolution = 0;
+    solutionToggle.hidden = false;
+    solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', Number(b.dataset.solution) === 0));
+    setStatus('Two triangles satisfy these values — pick a solution below.', 'ambiguous');
+    showSolution(result.solutions[0]);
+  } else if (result.status === 'ok') {
+    setStatus('Triangle solved.', 'ok');
+    showSolution(result);
+  } else {
+    setStatus(result.message, 'error');
+    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+  }
 }
 
-function handleReset() {
-  [...fieldIds.sides, ...fieldIds.angles].forEach((id) => {
-    document.getElementById(id).value = '';
-  });
-  lastAmbiguous = null;
-  handleInputChange();
+function handleFieldInput(id) {
+  const raw = document.getElementById(id).value.trim();
+  if (raw === '' || Number.isNaN(parseFloat(raw))) givenFields.delete(id);
+  else givenFields.add(id);
+  recompute();
 }
 
-[...fieldIds.sides, ...fieldIds.angles].forEach((id) => {
-  document.getElementById(id).addEventListener('input', handleInputChange);
+function resetToDefault() {
+  for (const id of ALL_FIELD_IDS) {
+    const el = document.getElementById(id);
+    el.value = DEFAULT_GIVEN[id] || '';
+    el.classList.remove('computed', 'given');
+  }
+  givenFields = new Set(Object.keys(DEFAULT_GIVEN));
+  recompute();
+}
+
+ALL_FIELD_IDS.forEach((id) => {
+  document.getElementById(id).addEventListener('input', () => handleFieldInput(id));
 });
-resetBtn.addEventListener('click', handleReset);
+resetBtn.addEventListener('click', resetToDefault);
 
 solutionToggle.querySelectorAll('button').forEach((btn) => {
   btn.addEventListener('click', () => {
     if (!lastAmbiguous) return;
     selectedSolution = Number(btn.dataset.solution);
     solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
-    const { sides, angles } = readInputs();
-    const givenSides = sides.map((v) => v != null && !Number.isNaN(v));
-    const givenAngles = angles.map((v) => v != null && !Number.isNaN(v));
-    const sol = lastAmbiguous.solutions[selectedSolution];
-    renderTriangle(svg, sol.sides, sol.angles);
-    renderResults(sol.sides, sol.angles, givenSides, givenAngles);
+    showSolution(lastAmbiguous.solutions[selectedSolution]);
   });
 });
 
-// Initial placeholder render
-renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
-setStatus('Enter any 3 values (sides and/or angles) to solve the triangle.');
+resetToDefault();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
