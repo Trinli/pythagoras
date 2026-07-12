@@ -5,10 +5,12 @@
 A small, standalone, installable web app (Progressive Web App) that solves a **right
 triangle**: the right angle is always fixed at 90°, so the user only ever needs to
 provide 2 of the remaining 5 values (2 legs, the hypotenuse, and 2 acute angles). The
-app computes the rest and draws the triangle to scale, updating live as the user types.
-The UI is deliberately minimal — inputs live directly on the triangle diagram, with
-(almost) no surrounding label text. All UI text is in Swedish. The app must work well on
-both Android (Chrome) and iPhone (Safari), without requiring an app store.
+app computes the rest and fills the numbers into the diagram as the user types. The
+diagram itself is a fixed, classic 3-4-5 right triangle (right angle at bottom-right)
+that never changes shape — only the 5 input values change. The UI is deliberately
+minimal — inputs live directly on the triangle diagram, with (almost) no surrounding
+label text. All UI text is in Swedish. The app must work well on both Android (Chrome)
+and iPhone (Safari), without requiring an app store.
 
 ## 2. Terminology / conventions
 
@@ -54,15 +56,16 @@ The solver's ambiguous-case branch is kept for robustness (defensive fallback: s
 uses the first solution) but is not expected to be reachable through the UI.
 
 ### 3.3 Triangle drawing
-- Rendered as SVG, scaled to fit the container, with the container's own aspect ratio
-  matching the solved triangle's true proportions (so the shape visibly reflects reality,
-  not a fixed square crop).
-- Updates automatically on every valid recompute.
+- Rendered as SVG, a **fixed, unchanging** classic 3-4-5 right triangle with the right
+  angle at bottom-right. The shape/proportions never change as the user types — only
+  the 5 overlay input values do. This is intentional: a triangle that visibly rescaled
+  with every keystroke was found to be more distracting than useful.
+- The drawing's only dynamic feedback is a solid-vs-dashed outline: dashed while
+  unsolved/invalid, solid once a valid solve completes.
 - No vertex letters, no text labels on sides/angles — the 5 input fields *are* the
   labels, positioned at the same spots a text label would occupy (side midpoints,
-  outward from acute vertices), so numbers never sit on top of triangle edges.
-- Before 2 valid values are entered, a default placeholder right triangle (3-4-5, dashed)
-  is shown so the 5 inputs have sensible starting positions.
+  outward from the two acute vertices), so numbers never sit on top of triangle edges.
+  Input positions are computed once (they never need to move, since the shape is fixed).
 
 ### 3.4 Validation & error states
 - Fewer than 2 or more than 2 values given → the diagram + inputs remain, with a short
@@ -90,7 +93,7 @@ uses the first solution) but is not expected to be reachable through the UI.
 - **No account / persistence**: no login or cloud storage.
 - **Responsive / mobile-first**: layout works on small phone screens in portrait
   orientation; touch-friendly inputs with numeric keyboards; input positions use
-  percentage-based placement over the diagram so they track the live-updating shape
+  fixed percentage-based placement over the (unchanging) diagram, so they line up
   correctly regardless of screen size.
 - **Precision**: internal math in radians; UI displays degrees/lengths rounded to 2
   decimal places.

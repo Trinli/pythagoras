@@ -45,7 +45,7 @@ html, body {
 .triangle-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 6 / 5;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;

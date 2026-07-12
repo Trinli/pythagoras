@@ -6,6 +6,10 @@
  * this app only solves right triangles, so the app only ever asks for 2
  * of the remaining 5 values (a, b, c, alpha, beta) — gamma is the 3rd,
  * implicit, always-known value the solver needs.
+ *
+ * The diagram itself never changes shape — it's always the same fixed
+ * 3-4-5 right triangle with the right angle at bottom-right. Only the
+ * numbers shown in the 5 overlay inputs change as the user types.
  */
 
 const ANGLE_EPS = 1e-6; // degrees
@@ -139,57 +143,35 @@ function solveTriangle(sidesIn, anglesIn) {
   return { status: 'error', message: 'Oväntad kombination av värden.' };
 }
 
-/** Place vertices A=(0,0), B=(c,0), C above the baseline. */
-function computePoints(sides, angles) {
-  const [, b] = sides;
-  const alpha = angles[0];
-  const A = { x: 0, y: 0 };
-  const B = { x: sides[2], y: 0 };
-  const C = { x: b * Math.cos(toRad(alpha)), y: -b * Math.sin(toRad(alpha)) };
-  return { A, B, C };
-}
-
 function normalize(v) {
   const len = Math.hypot(v.x, v.y) || 1;
   return { x: v.x / len, y: v.y / len };
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const DISPLAY_SIZE = 300;
+
+// Fixed 3-4-5 triangle, right angle (C) at bottom-right. Never recomputed.
+const LEG_A = 280; // bottom edge B–C, opposite vertex A
+const LEG_B = 210; // right edge A–C, opposite vertex B
 const PADDING = 70;
+const FIXED_PTS = {
+  A: { x: LEG_A, y: 0 },
+  B: { x: 0, y: LEG_B },
+  C: { x: LEG_A, y: LEG_B },
+};
+const FIXED_VIEWBOX = { x0: -PADDING, y0: -PADDING, w: LEG_A + 2 * PADDING, h: LEG_B + 2 * PADDING };
+const FIXED_CENTROID = {
+  x: (FIXED_PTS.A.x + FIXED_PTS.B.x + FIXED_PTS.C.x) / 3,
+  y: (FIXED_PTS.A.y + FIXED_PTS.B.y + FIXED_PTS.C.y) / 3,
+};
 
-function computeLayout(sides, angles) {
-  const { A, B, C } = computePoints(sides, angles);
-  const rawPts = [A, B, C];
-  const minX = Math.min(...rawPts.map((p) => p.x));
-  const maxX = Math.max(...rawPts.map((p) => p.x));
-  const minY = Math.min(...rawPts.map((p) => p.y));
-  const maxY = Math.max(...rawPts.map((p) => p.y));
-  const rawW = Math.max(maxX - minX, 1e-6);
-  const rawH = Math.max(maxY - minY, 1e-6);
-  const scale = DISPLAY_SIZE / Math.max(rawW, rawH);
-
-  const pts = rawPts.map((p) => ({ x: (p.x - minX) * scale, y: (p.y - minY) * scale }));
-  const w = rawW * scale;
-  const h = rawH * scale;
-  const centroid = {
-    x: (pts[0].x + pts[1].x + pts[2].x) / 3,
-    y: (pts[0].y + pts[1].y + pts[2].y) / 3,
-  };
-
-  return { pts, centroid, viewBox: { x0: -PADDING, y0: -PADDING, w: w + 2 * PADDING, h: h + 2 * PADDING } };
-}
-
-function drawTriangle(svg, layout, { placeholder = false } = {}) {
-  while (svg.firstChild) svg.removeChild(svg.firstChild);
-  const { viewBox, pts } = layout;
-  svg.setAttribute('viewBox', `${viewBox.x0} ${viewBox.y0} ${viewBox.w} ${viewBox.h}`);
-
-  const [A, B, C] = pts;
+function drawFixedTriangle(svg) {
+  svg.setAttribute('viewBox', `${FIXED_VIEWBOX.x0} ${FIXED_VIEWBOX.y0} ${FIXED_VIEWBOX.w} ${FIXED_VIEWBOX.h}`);
+  const { A, B, C } = FIXED_PTS;
 
   const poly = document.createElementNS(SVG_NS, 'polygon');
-  poly.setAttribute('points', pts.map((p) => `${p.x},${p.y}`).join(' '));
-  poly.setAttribute('class', placeholder ? 'triangle-shape placeholder' : 'triangle-shape');
+  poly.setAttribute('points', [A, B, C].map((p) => `${p.x},${p.y}`).join(' '));
+  poly.setAttribute('class', 'triangle-shape placeholder');
   svg.appendChild(poly);
 
   // Right-angle mark at C, tucked into the corner along its two edges
@@ -201,22 +183,25 @@ function drawTriangle(svg, layout, { placeholder = false } = {}) {
   const p2 = { x: p1.x + dirCB.x * markSize, y: p1.y + dirCB.y * markSize };
   const mark = document.createElementNS(SVG_NS, 'polyline');
   mark.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
-  mark.setAttribute('class', placeholder ? 'right-angle-mark placeholder' : 'right-angle-mark');
+  mark.setAttribute('class', 'right-angle-mark');
   svg.appendChild(mark);
+
+  return poly;
 }
 
-function positionInputs(layout, inputEls) {
-  const { pts, centroid, viewBox } = layout;
-  const [A, B, C] = pts;
-
-  const toPct = (p) => ({ left: ((p.x - viewBox.x0) / viewBox.w) * 100, top: ((p.y - viewBox.y0) / viewBox.h) * 100 });
+function positionFixedInputs(inputEls) {
+  const { A, B, C } = FIXED_PTS;
+  const toPct = (p) => ({
+    left: ((p.x - FIXED_VIEWBOX.x0) / FIXED_VIEWBOX.w) * 100,
+    top: ((p.y - FIXED_VIEWBOX.y0) / FIXED_VIEWBOX.h) * 100,
+  });
   const mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
   const away = (midpoint, opposite, dist) => {
     const d = normalize({ x: midpoint.x - opposite.x, y: midpoint.y - opposite.y });
     return { x: midpoint.x + d.x * dist, y: midpoint.y + d.y * dist };
   };
   const outward = (p, dist) => {
-    const d = normalize({ x: p.x - centroid.x, y: p.y - centroid.y });
+    const d = normalize({ x: p.x - FIXED_CENTROID.x, y: p.y - FIXED_CENTROID.y });
     return { x: p.x + d.x * dist, y: p.y + d.y * dist };
   };
 
@@ -235,7 +220,6 @@ function positionInputs(layout, inputEls) {
 
 // ---- UI wiring ----
 
-const wrap = document.getElementById('triangle-wrap');
 const svg = document.getElementById('triangle-svg');
 const statusEl = document.getElementById('status');
 const resetBtn = document.getElementById('reset-btn');
@@ -257,13 +241,16 @@ const FIELD_META = {
 const FIELD_KEYS = Object.keys(FIELD_META);
 
 let givenFields = new Set();
-
-const PLACEHOLDER_SIDES = [3, 4, 5];
-const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
+const trianglePoly = drawFixedTriangle(svg);
+positionFixedInputs(inputEls);
 
 function setStatus(message, kind) {
   statusEl.textContent = message || '';
   statusEl.className = kind ? `status ${kind}` : 'status';
+}
+
+function setSolved(isSolved) {
+  trianglePoly.classList.toggle('placeholder', !isSolved);
 }
 
 function readGivenValues() {
@@ -308,13 +295,6 @@ function fillComputed(sides, angles) {
   });
 }
 
-function applyLayout(sides, angles, { placeholder = false } = {}) {
-  const layout = computeLayout(sides, angles);
-  wrap.style.aspectRatio = `${layout.viewBox.w} / ${layout.viewBox.h}`;
-  drawTriangle(svg, layout, { placeholder });
-  positionInputs(layout, inputEls);
-}
-
 function recompute() {
   markFieldStyles();
   clearComputedFields();
@@ -322,12 +302,12 @@ function recompute() {
   const known = givenFields.size;
   if (known < 2) {
     setStatus('');
-    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    setSolved(false);
     return;
   }
   if (known > 2) {
     setStatus('För många värden — töm ett fält.', 'error');
-    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    setSolved(false);
     return;
   }
 
@@ -336,17 +316,17 @@ function recompute() {
 
   if (result.status === 'ok') {
     setStatus('');
-    applyLayout(result.sides, result.angles);
+    setSolved(true);
     fillComputed(result.sides, result.angles);
   } else if (result.status === 'ambiguous') {
     // Not reachable with a fixed right angle, but handled defensively.
     const sol = result.solutions[0];
     setStatus('');
-    applyLayout(sol.sides, sol.angles);
+    setSolved(true);
     fillComputed(sol.sides, sol.angles);
   } else {
     setStatus(result.message, 'error');
-    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    setSolved(false);
   }
 }
 
