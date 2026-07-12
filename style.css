@@ -32,20 +32,20 @@ html, body {
 }
 
 .app {
-  max-width: 480px;
+  max-width: 540px;
   margin: 0 auto;
   padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom));
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.4rem;
 }
 
 .triangle-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 6 / 5;
+  aspect-ratio: 504 / 434;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -60,74 +60,80 @@ html, body {
 .triangle-shape {
   fill: color-mix(in srgb, var(--accent) 15%, transparent);
   stroke: var(--accent);
-  stroke-width: 3;
+  stroke-width: 5;
   stroke-linejoin: round;
 }
 
 .triangle-shape.placeholder {
-  stroke-dasharray: 8 6;
-  opacity: 0.5;
+  stroke-dasharray: 10 8;
+  opacity: 0.6;
 }
 
 .right-angle-mark {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 3;
+  stroke-width: 5;
   stroke-linejoin: miter;
 }
 
 .right-angle-mark.placeholder {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .tri-input {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 3.9rem;
-  padding: 0.35rem 0.15rem;
+  width: 5.7rem;
+  padding: 0.55rem 0.25rem;
   text-align: center;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 10px;
+  border: 2px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 1.3rem;
+  font-family: inherit;
 }
 
 .tri-input.tri-input-angle {
-  width: 3.6rem;
+  width: 5.3rem;
 }
 
 .tri-input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .tri-input.given {
   border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tri-input.computed {
   color: var(--text-dim);
-  font-style: italic;
+  border-style: dashed;
 }
 
 .status {
   text-align: center;
-  min-height: 1.4em;
-  font-size: 0.9rem;
+  min-height: 1.6em;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--error);
 }
 
 .reset-btn {
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--border);
   background: var(--surface);
-  color: var(--text-dim);
-  font-size: 0.9rem;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 .reset-btn:active {
-  color: var(--text);
+  border-color: var(--accent);
+  color: var(--accent);
 }

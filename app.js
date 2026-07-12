@@ -153,7 +153,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // Fixed 3-4-5 triangle, right angle (C) at bottom-right. Never recomputed.
 const LEG_A = 280; // bottom edge B–C, opposite vertex A
 const LEG_B = 210; // right edge A–C, opposite vertex B
-const PADDING = 70;
+const PADDING = 112; // extra room around the shape for larger, easier-to-read inputs
 const FIXED_PTS = {
   A: { x: LEG_A, y: 0 },
   B: { x: 0, y: LEG_B },
@@ -177,7 +177,7 @@ function drawFixedTriangle(svg) {
   // Right-angle mark at C, tucked into the corner along its two edges
   const dirCA = normalize({ x: A.x - C.x, y: A.y - C.y });
   const dirCB = normalize({ x: B.x - C.x, y: B.y - C.y });
-  const markSize = 18;
+  const markSize = 24;
   const p1 = { x: C.x + dirCA.x * markSize, y: C.y + dirCA.y * markSize };
   const p3 = { x: C.x + dirCB.x * markSize, y: C.y + dirCB.y * markSize };
   const p2 = { x: p1.x + dirCB.x * markSize, y: p1.y + dirCB.y * markSize };
@@ -211,11 +211,11 @@ function positionFixedInputs(inputEls) {
     el.style.top = `${top}%`;
   };
 
-  setPos(inputEls.a, away(mid(B, C), A, 34)); // side a connects B-C, opposite A
-  setPos(inputEls.b, away(mid(A, C), B, 34)); // side b connects A-C, opposite B
-  setPos(inputEls.c, away(mid(A, B), C, 34)); // side c (hypotenuse) connects A-B, opposite C
-  setPos(inputEls.alpha, outward(A, 40));
-  setPos(inputEls.beta, outward(B, 40));
+  setPos(inputEls.a, away(mid(B, C), A, 48)); // side a connects B-C, opposite A
+  setPos(inputEls.b, away(mid(A, C), B, 48)); // side b connects A-C, opposite B
+  setPos(inputEls.c, away(mid(A, B), C, 48)); // side c (hypotenuse) connects A-B, opposite C
+  setPos(inputEls.alpha, outward(A, 58));
+  setPos(inputEls.beta, outward(B, 58));
 }
 
 // ---- UI wiring ----
