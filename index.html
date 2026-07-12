@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Triangle Solver</title>
-  <meta name="description" content="Enter any 3 sides and/or angles of a triangle and solve the rest." />
+  <title>Triangelräknare</title>
+  <meta name="description" content="Räkna ut sidor och vinklar i en rätvinklig triangel." />
 
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -12,60 +12,25 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Triangle" />
+  <meta name="apple-mobile-web-app-title" content="Triangel" />
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="app">
-    <h1>Triangle Solver</h1>
+    <div class="triangle-wrap" id="triangle-wrap">
+      <svg id="triangle-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Triangeldiagram"></svg>
 
-    <svg id="triangle-svg" class="triangle-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Triangle diagram"></svg>
+      <input id="input-a" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
+      <input id="input-b" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
+      <input id="input-c" class="tri-input" type="number" inputmode="decimal" step="any" min="0" aria-label="Hypotenusa" />
+      <input id="input-alpha" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
+      <input id="input-beta" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
+    </div>
 
     <p id="status" class="status" role="status" aria-live="polite"></p>
 
-    <div id="solution-toggle" class="solution-toggle" hidden>
-      <button type="button" class="active" data-solution="0">Solution 1</button>
-      <button type="button" data-solution="1">Solution 2</button>
-    </div>
-
-    <form class="inputs" autocomplete="off">
-      <fieldset>
-        <legend>Sides</legend>
-        <div class="field">
-          <label for="side-a">a</label>
-          <input id="side-a" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
-        </div>
-        <div class="field">
-          <label for="side-b">b</label>
-          <input id="side-b" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
-        </div>
-        <div class="field">
-          <label for="side-c">c</label>
-          <input id="side-c" type="number" inputmode="decimal" step="any" min="0" placeholder="length" />
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Angles (°)</legend>
-        <div class="field">
-          <label for="angle-alpha">α</label>
-          <input id="angle-alpha" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
-        </div>
-        <div class="field">
-          <label for="angle-beta">β</label>
-          <input id="angle-beta" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
-        </div>
-        <div class="field">
-          <label for="angle-gamma">γ</label>
-          <input id="angle-gamma" type="number" inputmode="decimal" step="any" min="0" max="179.999" placeholder="degrees" />
-        </div>
-      </fieldset>
-
-      <button type="button" id="reset-btn" class="reset-btn">Reset</button>
-    </form>
-
-    <p class="hint">Side <b>a</b> is opposite angle <b>α</b>, <b>b</b> opposite <b>β</b>, <b>c</b> opposite <b>γ</b>.</p>
+    <button type="button" id="reset-btn" class="reset-btn">Töm</button>
   </main>
 
   <script src="app.js"></script>

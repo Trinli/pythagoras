@@ -2,81 +2,104 @@
 
 ## 1. Overview
 
-A small, standalone, installable web app (Progressive Web App) that lets a user solve a
-triangle: given any 3 known values out of a triangle's 3 sides and 3 angles, the app
-computes the remaining 3 values and draws the triangle to scale. The drawing updates
-live as the user edits inputs. The app must work well on both Android (Chrome) and
-iPhone (Safari), without requiring an app store.
+A small, standalone, installable web app (Progressive Web App) that solves a **right
+triangle**: the right angle is always fixed at 90°, so the user only ever needs to
+provide 2 of the remaining 5 values (2 legs, the hypotenuse, and 2 acute angles). The
+app computes the rest and draws the triangle to scale, updating live as the user types.
+The UI is deliberately minimal — inputs live directly on the triangle diagram, with
+(almost) no surrounding label text. All UI text is in Swedish. The app must work well on
+both Android (Chrome) and iPhone (Safari), without requiring an app store.
 
 ## 2. Terminology / conventions
 
-- Vertices: **A**, **B**, **C**
-- Sides: **a**, **b**, **c** — each side is opposite the vertex/angle with the same letter
-  (side `a` is opposite angle `α` at vertex A, etc.)
-- Angles: **α, β, γ** (at vertices A, B, C respectively), measured in degrees in the UI
-- This labeling is used consistently across inputs, the drawing, and this document so
-  there's no ambiguity about which side pairs with which angle.
+- Internally: sides `a`, `b`, `c` and angles `α`, `β`, `γ`, with side `i` always opposite
+  angle `i` (same convention as a general triangle solver).
+- `γ` (gamma) is **permanently fixed at 90°** — it is not a user-editable value. Side `c`
+  is therefore always the hypotenuse; `a` and `b` are the two legs ("kateter"); `α` and
+  `β` are the two acute angles (summing to 90°).
+- None of this internal `a/b/c/α/β/γ` naming is shown to the user — fields are
+  identified purely by their position on the drawing (on a leg, on the hypotenuse, or
+  next to an acute-angle vertex).
 
 ## 3. Functional requirements
 
 ### 3.1 Input
-- Six input fields, one each for `a`, `b`, `c`, `α`, `β`, `γ`. Any field may be empty.
-- The user is expected to fill in exactly **3** of the 6 fields (any mix of sides and/or
-  angles).
-- Inputs recompute reactively as the user types (debounced), without requiring an
-  explicit "Calculate" button.
+- 5 number inputs, positioned directly on the triangle visualization:
+  - One at the midpoint of each side (2 legs + hypotenuse) — plain length, no unit label.
+  - One near each of the 2 acute-angle vertices — plain angle value, no unit label.
+- The right-angle vertex has no input; it's marked only with a small square (the
+  standard right-angle mark), never a number — the value is always implicitly 90°.
+- The user fills in any **2** of the 5 fields (any mix of sides/angles); the right angle
+  supplies the implicit 3rd known value the solver needs.
+- Inputs recompute reactively as the user types, no explicit "Calculate" button.
+- Once solved, the 3 remaining fields are filled in directly (not shown separately):
+  user-given fields are visually distinguished (highlighted) from computed fields
+  (dimmed/italic).
 
 ### 3.2 Solving rules
-The app must correctly solve all standard triangle cases:
+Reuses a general triangle solver (law of sines / law of cosines), with `γ` always passed
+in as 90°. Enumerating all `C(5,2) = 10` possible pairs of given values shows this always
+resolves to a unique triangle or a clear error — the classic SSA *ambiguous* 2-solution
+case cannot occur here, because:
+- 2 legs + the (always-known) right angle is always **SAS** (right angle is the included
+  angle between the legs) → unique.
+- A leg + the hypotenuse is the leg/hypotenuse congruence case → unique (the generic
+  ambiguous-case math naturally collapses to 1 valid solution here).
+- A side + an acute angle is **AAS/ASA** (right angle + given angle + given side) →
+  unique.
+- Both acute angles given (no side) → shape only, not size (see 3.4) — expected, since
+  `β = 90° − α` always, so this is redundant information.
 
-| Case | Given | Method |
-|---|---|---|
-| SSS | 3 sides | Law of cosines → all 3 angles |
-| SAS | 2 sides + included angle | Law of cosines → 3rd side, then law of sines → remaining angles |
-| ASA / AAS | 2 angles + 1 side | 3rd angle = 180° − sum of the other two, then law of sines → remaining sides |
-| SSA | 2 sides + a non-included angle | **Ambiguous case** — may yield 0, 1, or 2 valid triangles; the app must detect this and surface it to the user (see 3.4) |
-| AAA | 3 angles, no side | **Insufficient information** — shape is determined but size is not. Treated as invalid input (see 3.4), since the app's contract is to compute a unique, fully-determined triangle. |
+The solver's ambiguous-case branch is kept for robustness (defensive fallback: silently
+uses the first solution) but is not expected to be reachable through the UI.
 
 ### 3.3 Triangle drawing
-- Rendered on canvas or SVG, scaled to fit the viewport.
-- Updates automatically whenever a valid solve completes.
-- Vertices, sides, and angles are labeled on the drawing.
-- Before 3 valid values are entered, a sensible default/placeholder triangle is shown.
+- Rendered as SVG, scaled to fit the container, with the container's own aspect ratio
+  matching the solved triangle's true proportions (so the shape visibly reflects reality,
+  not a fixed square crop).
+- Updates automatically on every valid recompute.
+- No vertex letters, no text labels on sides/angles — the 5 input fields *are* the
+  labels, positioned at the same spots a text label would occupy (side midpoints,
+  outward from acute vertices), so numbers never sit on top of triangle edges.
+- Before 2 valid values are entered, a default placeholder right triangle (3-4-5, dashed)
+  is shown so the 5 inputs have sensible starting positions.
 
 ### 3.4 Validation & error states
-The app must detect and clearly message the following invalid states rather than
-showing a broken or silently-wrong triangle:
-- Fewer or more than 3 values provided (prompt the user to enter exactly 3).
-- Triangle inequality violated (for SSS/SAS-derived side combinations).
-- Given angles sum to ≥ 180° (or ≤ 0°).
-- Non-positive side lengths or angles.
-- SSA case with 0 valid solutions (no triangle exists).
-- SSA case with 2 valid solutions (ambiguous case) — both solutions are surfaced to the
-  user (e.g. shown side-by-side or via a toggle), rather than silently picking one.
-- AAA-only input (3 angles, no side) — flagged as insufficient to determine a unique
-  triangle.
+- Fewer than 2 or more than 2 values given → the diagram + inputs remain, with a short
+  Swedish message only in the "too many" case (`"För många värden — töm ett fält."`);
+  no message when simply waiting for more input (self-explanatory from empty fields).
+- Triangle inequality violated, non-positive values, angle(s) out of range, or angles
+  summing incorrectly → short Swedish error message, computed fields cleared.
+- Both acute angles given without a side → Swedish message explaining shape-only-not-size.
+- No success message on a valid solve — the filled-in numbers and updated drawing are
+  the only feedback (minimal-text philosophy).
 
 ### 3.5 Other controls
-- A reset/clear control to blank all inputs and return to the placeholder triangle.
+- A single button, labeled **"Töm"**, clears all 5 inputs and returns to the placeholder
+  triangle. This is the only persistent UI text besides error messages.
 
 ## 4. Non-functional / technical requirements
 
+- **Language**: all visible UI text (button, error messages, page title, manifest name)
+  is in Swedish.
 - **Delivery**: static PWA — HTML/CSS/JS, `manifest.json`, and a service worker.
   Installable via "Add to Home Screen" on both iOS Safari and Android Chrome.
 - **Offline**: fully usable offline once installed (no network calls required at all,
   since all computation is client-side).
 - **No backend**: 100% client-side; no user data ever leaves the device.
 - **No account / persistence**: no login or cloud storage.
-  - Optional stretch goal: remember the last input values via `localStorage` so the app
-    reopens where the user left off. Not required for v1.
 - **Responsive / mobile-first**: layout works on small phone screens in portrait
-  orientation primarily; touch-friendly input fields with numeric keyboards.
-- **Precision**: internal math performed in radians; UI displays degrees, rounded to a
-  reasonable precision (e.g. 2 decimal places) for both angles and lengths.
+  orientation; touch-friendly inputs with numeric keyboards; input positions use
+  percentage-based placement over the diagram so they track the live-updating shape
+  correctly regardless of screen size.
+- **Precision**: internal math in radians; UI displays degrees/lengths rounded to 2
+  decimal places.
 
 ## 5. Out of scope
 
-- Unit conversion (a single generic length unit is assumed; no cm/inch/etc. switching).
+- Non-right triangles (general 3-of-6 triangle solving was the v1 design; this version
+  deliberately narrows to right triangles only, per simplification request).
+- Unit conversion (a single generic length unit is assumed).
 - Saving/history of multiple triangles.
 - Accounts, cloud sync, or sharing features.
-- Native app store distribution (PWA only for v1).
+- Native app store distribution (PWA only).

@@ -2,15 +2,20 @@
 
 /*
  * Indexing convention: index 0/1/2 = a/b/c and alpha/beta/gamma.
- * Side i is always opposite angle i.
+ * Side i is always opposite angle i. Gamma (index 2) is permanently 90°:
+ * this app only solves right triangles, so the app only ever asks for 2
+ * of the remaining 5 values (a, b, c, alpha, beta) — gamma is the 3rd,
+ * implicit, always-known value the solver needs.
  */
 
 const ANGLE_EPS = 1e-6; // degrees
 const RATIO_EPS = 1e-9;
+const RIGHT_ANGLE = 90;
 
 function toRad(deg) { return (deg * Math.PI) / 180; }
 function toDeg(rad) { return (rad * 180) / Math.PI; }
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function fmt(n) { return Math.round(n * 100) / 100; }
 
 function lawOfCosinesAngles(sides) {
   const [a, b, c] = sides;
@@ -23,11 +28,11 @@ function lawOfCosinesAngles(sides) {
 /**
  * Solve a triangle given partial sides/angles arrays (null = unknown).
  * Returns one of:
- *   { status: 'incomplete' }                              fewer/more than 3 known
- *   { status: 'insufficient', message }                    AAA only
- *   { status: 'error', message }                            invalid combination
- *   { status: 'ok', sides, angles }                         unique solution
- *   { status: 'ambiguous', solutions: [{sides,angles}, ...] } SSA with 2 solutions
+ *   { status: 'incomplete' }                                fewer/more than 3 known
+ *   { status: 'insufficient', message }                      angles only, no size
+ *   { status: 'error', message }                              invalid combination
+ *   { status: 'ok', sides, angles }                           unique solution
+ *   { status: 'ambiguous', solutions: [{sides,angles}, ...] }  SSA with 2 solutions
  */
 function solveTriangle(sidesIn, anglesIn) {
   const sides = sidesIn.slice();
@@ -36,11 +41,11 @@ function solveTriangle(sidesIn, anglesIn) {
   const knownAngleIdx = [0, 1, 2].filter((i) => angles[i] != null);
 
   for (const i of knownSideIdx) {
-    if (!(sides[i] > 0)) return { status: 'error', message: 'Side lengths must be greater than 0.' };
+    if (!(sides[i] > 0)) return { status: 'error', message: 'Sidlängder måste vara större än 0.' };
   }
   for (const i of knownAngleIdx) {
     if (!(angles[i] > 0 && angles[i] < 180)) {
-      return { status: 'error', message: 'Angles must be between 0° and 180°.' };
+      return { status: 'error', message: 'Vinklar måste vara mellan 0° och 180°.' };
     }
   }
 
@@ -48,15 +53,15 @@ function solveTriangle(sidesIn, anglesIn) {
   const nA = knownAngleIdx.length;
   if (nS + nA !== 3) return { status: 'incomplete' };
 
-  // AAA: shape only, no unique size
+  // Angles only: shape fixed, but not size
   if (nA === 3) {
     const sum = angles[0] + angles[1] + angles[2];
     if (Math.abs(sum - 180) > ANGLE_EPS) {
-      return { status: 'error', message: 'The three angles must add up to 180°.' };
+      return { status: 'error', message: 'Vinklarna måste summera till 180°.' };
     }
     return {
       status: 'insufficient',
-      message: 'Three angles fix the shape but not the size — enter a side length for a unique triangle.',
+      message: 'Vinklarna ger bara formen, inte storleken — fyll i en sida också.',
     };
   }
 
@@ -64,16 +69,16 @@ function solveTriangle(sidesIn, anglesIn) {
   if (nS === 3) {
     const [a, b, c] = sides;
     if (a + b <= c || b + c <= a || a + c <= b) {
-      return { status: 'error', message: "These three side lengths can't form a triangle." };
+      return { status: 'error', message: 'Dessa sidlängder kan inte bilda en triangel.' };
     }
     return { status: 'ok', sides: sides.slice(), angles: lawOfCosinesAngles(sides) };
   }
 
-  // ASA / AAS: one side, two angles
+  // One side, two angles
   if (nS === 1 && nA === 2) {
     const sum = knownAngleIdx.reduce((s, i) => s + angles[i], 0);
     if (sum >= 180 - ANGLE_EPS) {
-      return { status: 'error', message: 'The two given angles must add to less than 180°.' };
+      return { status: 'error', message: 'Vinklarna måste summera till mindre än 180°.' };
     }
     const missingAngle = [0, 1, 2].find((i) => !knownAngleIdx.includes(i));
     angles[missingAngle] = 180 - sum;
@@ -85,7 +90,7 @@ function solveTriangle(sidesIn, anglesIn) {
     return { status: 'ok', sides, angles };
   }
 
-  // Two sides + one angle: SAS (unique) or SSA (ambiguous)
+  // Two sides + one angle: SAS (unique) or SSA (possibly ambiguous)
   if (nS === 2 && nA === 1) {
     const missingSide = [0, 1, 2].find((i) => !knownSideIdx.includes(i));
     const givenAngle = knownAngleIdx[0];
@@ -94,18 +99,18 @@ function solveTriangle(sidesIn, anglesIn) {
       // SAS: given angle is included between the two known sides
       const [j, k] = knownSideIdx;
       const sq = sides[j] ** 2 + sides[k] ** 2 - 2 * sides[j] * sides[k] * Math.cos(toRad(angles[givenAngle]));
-      if (sq <= 0) return { status: 'error', message: 'No valid triangle for these values.' };
+      if (sq <= 0) return { status: 'error', message: 'Ingen giltig triangel för dessa värden.' };
       sides[missingSide] = Math.sqrt(sq);
       return { status: 'ok', sides, angles: lawOfCosinesAngles(sides) };
     }
 
-    // SSA: given angle is opposite one of the two known sides — ambiguous case
+    // SSA: given angle is opposite one of the two known sides
     const j = givenAngle;
     const k = knownSideIdx.find((i) => i !== j);
     const m = missingSide;
     const ratio = (sides[k] * Math.sin(toRad(angles[j]))) / sides[j];
 
-    if (ratio > 1 + RATIO_EPS) return { status: 'error', message: 'No triangle exists for these values.' };
+    if (ratio > 1 + RATIO_EPS) return { status: 'error', message: 'Ingen triangel finns för dessa värden.' };
 
     const clampedRatio = clamp(ratio, -1, 1);
     const isRightAngle = Math.abs(clampedRatio - 1) < 1e-9;
@@ -126,12 +131,12 @@ function solveTriangle(sidesIn, anglesIn) {
       }
     }
 
-    if (solutions.length === 0) return { status: 'error', message: 'No triangle exists for these values.' };
+    if (solutions.length === 0) return { status: 'error', message: 'Ingen triangel finns för dessa värden.' };
     if (solutions.length === 1) return { status: 'ok', sides: solutions[0].sides, angles: solutions[0].angles };
     return { status: 'ambiguous', solutions };
   }
 
-  return { status: 'error', message: 'Unexpected combination of inputs.' };
+  return { status: 'error', message: 'Oväntad kombination av värden.' };
 }
 
 /** Place vertices A=(0,0), B=(c,0), C above the baseline. */
@@ -144,17 +149,16 @@ function computePoints(sides, angles) {
   return { A, B, C };
 }
 
+function normalize(v) {
+  const len = Math.hypot(v.x, v.y) || 1;
+  return { x: v.x / len, y: v.y / len };
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DISPLAY_SIZE = 300;
 const PADDING = 70;
 
-function fmt(n) {
-  return Math.round(n * 100) / 100;
-}
-
-function renderTriangle(svg, sides, angles, { placeholder = false } = {}) {
-  while (svg.firstChild) svg.removeChild(svg.firstChild);
-
+function computeLayout(sides, angles) {
   const { A, B, C } = computePoints(sides, angles);
   const rawPts = [A, B, C];
   const minX = Math.min(...rawPts.map((p) => p.x));
@@ -168,93 +172,106 @@ function renderTriangle(svg, sides, angles, { placeholder = false } = {}) {
   const pts = rawPts.map((p) => ({ x: (p.x - minX) * scale, y: (p.y - minY) * scale }));
   const w = rawW * scale;
   const h = rawH * scale;
-  svg.setAttribute('viewBox', `${-PADDING} ${-PADDING} ${w + 2 * PADDING} ${h + 2 * PADDING}`);
-
   const centroid = {
     x: (pts[0].x + pts[1].x + pts[2].x) / 3,
     y: (pts[0].y + pts[1].y + pts[2].y) / 3,
   };
+
+  return { pts, centroid, viewBox: { x0: -PADDING, y0: -PADDING, w: w + 2 * PADDING, h: h + 2 * PADDING } };
+}
+
+function drawTriangle(svg, layout, { placeholder = false } = {}) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const { viewBox, pts } = layout;
+  svg.setAttribute('viewBox', `${viewBox.x0} ${viewBox.y0} ${viewBox.w} ${viewBox.h}`);
+
+  const [A, B, C] = pts;
 
   const poly = document.createElementNS(SVG_NS, 'polygon');
   poly.setAttribute('points', pts.map((p) => `${p.x},${p.y}`).join(' '));
   poly.setAttribute('class', placeholder ? 'triangle-shape placeholder' : 'triangle-shape');
   svg.appendChild(poly);
 
-  if (placeholder) return;
-
-  // Angle labels, offset outward past each vertex so they never cross the triangle
-  pts.forEach((p, i) => {
-    const dir = normalize({ x: p.x - centroid.x, y: p.y - centroid.y });
-    const anglePos = { x: p.x + dir.x * 30, y: p.y + dir.y * 30 };
-    addText(svg, anglePos.x, anglePos.y, `${fmt(angles[i])}°`, 'angle-label');
-  });
-
-  // Side labels at midpoints, offset away from the opposite vertex
-  const pairs = [
-    [1, 2, 0], // side a connects B(1)-C(2), opposite A(0)
-    [0, 2, 1], // side b connects A(0)-C(2), opposite B(1)
-    [0, 1, 2], // side c connects A(0)-B(1), opposite C(2)
-  ];
-  pairs.forEach(([p1, p2, opp], sideIdx) => {
-    const mid = { x: (pts[p1].x + pts[p2].x) / 2, y: (pts[p1].y + pts[p2].y) / 2 };
-    const away = normalize({ x: mid.x - pts[opp].x, y: mid.y - pts[opp].y });
-    const pos = { x: mid.x + away.x * 20, y: mid.y + away.y * 20 };
-    addText(svg, pos.x, pos.y, fmt(sides[sideIdx]).toString(), 'side-label');
-  });
+  // Right-angle mark at C, tucked into the corner along its two edges
+  const dirCA = normalize({ x: A.x - C.x, y: A.y - C.y });
+  const dirCB = normalize({ x: B.x - C.x, y: B.y - C.y });
+  const markSize = 18;
+  const p1 = { x: C.x + dirCA.x * markSize, y: C.y + dirCA.y * markSize };
+  const p3 = { x: C.x + dirCB.x * markSize, y: C.y + dirCB.y * markSize };
+  const p2 = { x: p1.x + dirCB.x * markSize, y: p1.y + dirCB.y * markSize };
+  const mark = document.createElementNS(SVG_NS, 'polyline');
+  mark.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+  mark.setAttribute('class', placeholder ? 'right-angle-mark placeholder' : 'right-angle-mark');
+  svg.appendChild(mark);
 }
 
-function normalize(v) {
-  const len = Math.hypot(v.x, v.y) || 1;
-  return { x: v.x / len, y: v.y / len };
-}
+function positionInputs(layout, inputEls) {
+  const { pts, centroid, viewBox } = layout;
+  const [A, B, C] = pts;
 
-function addText(svg, x, y, str, cls) {
-  const t = document.createElementNS(SVG_NS, 'text');
-  t.setAttribute('x', x);
-  t.setAttribute('y', y);
-  t.setAttribute('class', cls);
-  t.setAttribute('text-anchor', 'middle');
-  t.setAttribute('dominant-baseline', 'middle');
-  t.textContent = str;
-  svg.appendChild(t);
+  const toPct = (p) => ({ left: ((p.x - viewBox.x0) / viewBox.w) * 100, top: ((p.y - viewBox.y0) / viewBox.h) * 100 });
+  const mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
+  const away = (midpoint, opposite, dist) => {
+    const d = normalize({ x: midpoint.x - opposite.x, y: midpoint.y - opposite.y });
+    return { x: midpoint.x + d.x * dist, y: midpoint.y + d.y * dist };
+  };
+  const outward = (p, dist) => {
+    const d = normalize({ x: p.x - centroid.x, y: p.y - centroid.y });
+    return { x: p.x + d.x * dist, y: p.y + d.y * dist };
+  };
+
+  const setPos = (el, p) => {
+    const { left, top } = toPct(p);
+    el.style.left = `${left}%`;
+    el.style.top = `${top}%`;
+  };
+
+  setPos(inputEls.a, away(mid(B, C), A, 34)); // side a connects B-C, opposite A
+  setPos(inputEls.b, away(mid(A, C), B, 34)); // side b connects A-C, opposite B
+  setPos(inputEls.c, away(mid(A, B), C, 34)); // side c (hypotenuse) connects A-B, opposite C
+  setPos(inputEls.alpha, outward(A, 40));
+  setPos(inputEls.beta, outward(B, 40));
 }
 
 // ---- UI wiring ----
 
-const FIELD_META = {
-  'side-a': { group: 'sides', index: 0 },
-  'side-b': { group: 'sides', index: 1 },
-  'side-c': { group: 'sides', index: 2 },
-  'angle-alpha': { group: 'angles', index: 0 },
-  'angle-beta': { group: 'angles', index: 1 },
-  'angle-gamma': { group: 'angles', index: 2 },
-};
-const ALL_FIELD_IDS = Object.keys(FIELD_META);
-const DEFAULT_GIVEN = { 'angle-gamma': '90' };
-
+const wrap = document.getElementById('triangle-wrap');
 const svg = document.getElementById('triangle-svg');
 const statusEl = document.getElementById('status');
-const solutionToggle = document.getElementById('solution-toggle');
 const resetBtn = document.getElementById('reset-btn');
 
+const inputEls = {
+  a: document.getElementById('input-a'),
+  b: document.getElementById('input-b'),
+  c: document.getElementById('input-c'),
+  alpha: document.getElementById('input-alpha'),
+  beta: document.getElementById('input-beta'),
+};
+const FIELD_META = {
+  a: { group: 'sides', index: 0 },
+  b: { group: 'sides', index: 1 },
+  c: { group: 'sides', index: 2 },
+  alpha: { group: 'angles', index: 0 },
+  beta: { group: 'angles', index: 1 },
+};
+const FIELD_KEYS = Object.keys(FIELD_META);
+
 let givenFields = new Set();
-let lastAmbiguous = null;
-let selectedSolution = 0;
 
 const PLACEHOLDER_SIDES = [3, 4, 5];
 const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
 
 function setStatus(message, kind) {
-  statusEl.textContent = message;
+  statusEl.textContent = message || '';
   statusEl.className = kind ? `status ${kind}` : 'status';
 }
 
 function readGivenValues() {
   const sides = [null, null, null];
-  const angles = [null, null, null];
-  for (const id of givenFields) {
-    const meta = FIELD_META[id];
-    const value = parseFloat(document.getElementById(id).value);
+  const angles = [null, null, RIGHT_ANGLE];
+  for (const key of givenFields) {
+    const meta = FIELD_META[key];
+    const value = parseFloat(inputEls[key].value);
     if (meta.group === 'sides') sides[meta.index] = value;
     else angles[meta.index] = value;
   }
@@ -262,111 +279,99 @@ function readGivenValues() {
 }
 
 function markFieldStyles() {
-  for (const id of ALL_FIELD_IDS) {
-    const el = document.getElementById(id);
-    el.classList.toggle('given', givenFields.has(id));
+  for (const key of FIELD_KEYS) {
+    const isGiven = givenFields.has(key);
+    inputEls[key].classList.toggle('given', isGiven);
+    if (isGiven) inputEls[key].classList.remove('computed');
   }
 }
 
 function clearComputedFields() {
-  for (const id of ALL_FIELD_IDS) {
-    if (!givenFields.has(id)) {
-      const el = document.getElementById(id);
-      el.value = '';
-      el.classList.remove('computed');
+  for (const key of FIELD_KEYS) {
+    if (!givenFields.has(key)) {
+      inputEls[key].value = '';
+      inputEls[key].classList.remove('computed');
     }
   }
 }
 
 function fillComputed(sides, angles) {
-  ['side-a', 'side-b', 'side-c'].forEach((id, i) => {
-    if (givenFields.has(id)) return;
-    const el = document.getElementById(id);
-    el.value = fmt(sides[i]);
-    el.classList.add('computed');
+  ['a', 'b', 'c'].forEach((key, i) => {
+    if (givenFields.has(key)) return;
+    inputEls[key].value = fmt(sides[i]);
+    inputEls[key].classList.add('computed');
   });
-  ['angle-alpha', 'angle-beta', 'angle-gamma'].forEach((id, i) => {
-    if (givenFields.has(id)) return;
-    const el = document.getElementById(id);
-    el.value = fmt(angles[i]);
-    el.classList.add('computed');
+  ['alpha', 'beta'].forEach((key, i) => {
+    if (givenFields.has(key)) return;
+    inputEls[key].value = fmt(angles[i]);
+    inputEls[key].classList.add('computed');
   });
 }
 
-function showSolution(sol) {
-  renderTriangle(svg, sol.sides, sol.angles);
-  fillComputed(sol.sides, sol.angles);
+function applyLayout(sides, angles, { placeholder = false } = {}) {
+  const layout = computeLayout(sides, angles);
+  wrap.style.aspectRatio = `${layout.viewBox.w} / ${layout.viewBox.h}`;
+  drawTriangle(svg, layout, { placeholder });
+  positionInputs(layout, inputEls);
 }
 
 function recompute() {
   markFieldStyles();
   clearComputedFields();
-  solutionToggle.hidden = true;
-  lastAmbiguous = null;
 
   const known = givenFields.size;
-  if (known < 3) {
-    setStatus(`Enter ${3 - known} more value${3 - known === 1 ? '' : 's'} (any mix of sides and angles).`);
-    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+  if (known < 2) {
+    setStatus('');
+    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
-  if (known > 3) {
-    setStatus('Only 3 values are needed — clear one field.', 'error');
-    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+  if (known > 2) {
+    setStatus('För många värden — töm ett fält.', 'error');
+    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
 
   const { sides, angles } = readGivenValues();
   const result = solveTriangle(sides, angles);
 
-  if (result.status === 'ambiguous') {
-    lastAmbiguous = result;
-    selectedSolution = 0;
-    solutionToggle.hidden = false;
-    solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', Number(b.dataset.solution) === 0));
-    setStatus('Two triangles satisfy these values — pick a solution below.', 'ambiguous');
-    showSolution(result.solutions[0]);
-  } else if (result.status === 'ok') {
-    setStatus('Triangle solved.', 'ok');
-    showSolution(result);
+  if (result.status === 'ok') {
+    setStatus('');
+    applyLayout(result.sides, result.angles);
+    fillComputed(result.sides, result.angles);
+  } else if (result.status === 'ambiguous') {
+    // Not reachable with a fixed right angle, but handled defensively.
+    const sol = result.solutions[0];
+    setStatus('');
+    applyLayout(sol.sides, sol.angles);
+    fillComputed(sol.sides, sol.angles);
   } else {
     setStatus(result.message, 'error');
-    renderTriangle(svg, PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    applyLayout(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
   }
 }
 
-function handleFieldInput(id) {
-  const raw = document.getElementById(id).value.trim();
-  if (raw === '' || Number.isNaN(parseFloat(raw))) givenFields.delete(id);
-  else givenFields.add(id);
+function handleFieldInput(key) {
+  const raw = inputEls[key].value.trim();
+  if (raw === '' || Number.isNaN(parseFloat(raw))) givenFields.delete(key);
+  else givenFields.add(key);
   recompute();
 }
 
-function resetToDefault() {
-  for (const id of ALL_FIELD_IDS) {
-    const el = document.getElementById(id);
-    el.value = DEFAULT_GIVEN[id] || '';
-    el.classList.remove('computed', 'given');
+function handleReset() {
+  for (const key of FIELD_KEYS) {
+    inputEls[key].value = '';
+    inputEls[key].classList.remove('given', 'computed');
   }
-  givenFields = new Set(Object.keys(DEFAULT_GIVEN));
+  givenFields = new Set();
   recompute();
 }
 
-ALL_FIELD_IDS.forEach((id) => {
-  document.getElementById(id).addEventListener('input', () => handleFieldInput(id));
+FIELD_KEYS.forEach((key) => {
+  inputEls[key].addEventListener('input', () => handleFieldInput(key));
 });
-resetBtn.addEventListener('click', resetToDefault);
+resetBtn.addEventListener('click', handleReset);
 
-solutionToggle.querySelectorAll('button').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (!lastAmbiguous) return;
-    selectedSolution = Number(btn.dataset.solution);
-    solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
-    showSolution(lastAmbiguous.solutions[selectedSolution]);
-  });
-});
-
-resetToDefault();
+recompute();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

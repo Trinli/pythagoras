@@ -1,7 +1,7 @@
 {
-  "name": "Triangle Solver",
-  "short_name": "Triangle",
-  "description": "Enter any 3 sides and/or angles of a triangle and solve the rest.",
+  "name": "Triangelräknare",
+  "short_name": "Triangel",
+  "description": "Räkna ut sidor och vinklar i en rätvinklig triangel.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
