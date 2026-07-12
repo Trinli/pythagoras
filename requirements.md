@@ -57,9 +57,11 @@ uses the first solution) but is not expected to be reachable through the UI.
 
 ### 3.3 Triangle drawing
 - Rendered as SVG, a **fixed, unchanging** classic 3-4-5 right triangle with the right
-  angle at bottom-right. The shape/proportions never change as the user types — only
-  the 5 overlay input values do. This is intentional: a triangle that visibly rescaled
-  with every keystroke was found to be more distracting than useful.
+  angle at bottom-right, long leg vertical and short leg horizontal (a taller-than-wide
+  bounding box, which leaves more side margin for the input fields on a portrait phone
+  screen than a wide/short orientation would). The shape/proportions never change as the
+  user types — only the 5 overlay input values do. This is intentional: a triangle that
+  visibly rescaled with every keystroke was found to be more distracting than useful.
 - The drawing's only dynamic feedback is a solid-vs-dashed outline: dashed while
   unsolved/invalid, solid once a valid solve completes.
 - No vertex letters, no text labels on sides/angles — the 5 input fields *are* the

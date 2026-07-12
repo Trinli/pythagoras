@@ -151,8 +151,11 @@ function normalize(v) {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // Fixed 3-4-5 triangle, right angle (C) at bottom-right. Never recomputed.
-const LEG_A = 280; // bottom edge B–C, opposite vertex A
-const LEG_B = 210; // right edge A–C, opposite vertex B
+// The long leg is vertical (and the short leg horizontal) so the diagram is
+// taller than it is wide — that leaves more horizontal margin on the sides
+// for the input fields on a typical (portrait) phone screen.
+const LEG_A = 210; // bottom edge B–C, opposite vertex A (short leg, horizontal)
+const LEG_B = 280; // right edge A–C, opposite vertex B (long leg, vertical)
 const PADDING = 145; // extra room around the shape for larger, easier-to-read inputs
 const FIXED_PTS = {
   A: { x: LEG_A, y: 0 },

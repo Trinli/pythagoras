@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'triangle-solver-v10';
+const CACHE_NAME = 'triangle-solver-v11';
 const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
