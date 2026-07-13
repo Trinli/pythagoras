@@ -34,7 +34,7 @@ html, body {
 
 .triangle-wrap {
   width: 100%;
-  aspect-ratio: 6 / 5;
+  aspect-ratio: 410 / 254; /* matches the default placeholder shape; JS updates this per solve */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -55,6 +55,17 @@ html, body {
 
 .triangle-shape.placeholder {
   opacity: 0.55;
+}
+
+.right-angle-mark {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linejoin: miter;
+}
+
+.right-angle-mark.placeholder {
+  opacity: 0.7;
 }
 
 .side-label {

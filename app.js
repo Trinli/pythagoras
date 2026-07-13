@@ -15,7 +15,7 @@ function toRad(deg) { return (deg * Math.PI) / 180; }
 function toDeg(rad) { return (rad * 180) / Math.PI; }
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 function fmt(n) { return Math.round(n * 100) / 100; }
-function fmtAngle(n) { return Math.round(n * 10) / 10; }
+function fmtAngle(n) { return n.toFixed(1); }
 
 function lawOfCosinesAngles(sides) {
   const [a, b, c] = sides;
@@ -157,6 +157,7 @@ function normalize(v) {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DISPLAY_SIZE = 300;
 const PADDING = 55;
+const RIGHT_ANGLE_EPS = 0.05; // degrees; angles this close to 90° get the right-angle mark
 
 function computeLayout(sides, angles) {
   const { A, B, C } = computePoints(sides, angles);
@@ -196,11 +197,31 @@ function drawTriangle(svg, sides, angles, { placeholder = false } = {}) {
   const layout = computeLayout(sides, angles);
   const { viewBox, pts, centroid } = layout;
   svg.setAttribute('viewBox', `${viewBox.x0} ${viewBox.y0} ${viewBox.w} ${viewBox.h}`);
+  // Match the container's own aspect ratio to the actual shape so the card
+  // never has dead letterboxed space above/below or beside the triangle.
+  triangleWrap.style.aspectRatio = `${viewBox.w} / ${viewBox.h}`;
 
   const poly = document.createElementNS(SVG_NS, 'polygon');
   poly.setAttribute('points', pts.map((p) => `${p.x},${p.y}`).join(' '));
   poly.setAttribute('class', placeholder ? 'triangle-shape placeholder' : 'triangle-shape');
   svg.appendChild(poly);
+
+  // Mark the right angle (if any) with the standard small-square convention
+  const rightIdx = angles.findIndex((a) => Math.abs(a - 90) < RIGHT_ANGLE_EPS);
+  if (rightIdx !== -1) {
+    const [i1, i2] = [0, 1, 2].filter((i) => i !== rightIdx);
+    const P = pts[rightIdx];
+    const dir1 = normalize({ x: pts[i1].x - P.x, y: pts[i1].y - P.y });
+    const dir2 = normalize({ x: pts[i2].x - P.x, y: pts[i2].y - P.y });
+    const markSize = 20;
+    const m1 = { x: P.x + dir1.x * markSize, y: P.y + dir1.y * markSize };
+    const m3 = { x: P.x + dir2.x * markSize, y: P.y + dir2.y * markSize };
+    const m2 = { x: m1.x + dir2.x * markSize, y: m1.y + dir2.y * markSize };
+    const mark = document.createElementNS(SVG_NS, 'polyline');
+    mark.setAttribute('points', `${m1.x},${m1.y} ${m2.x},${m2.y} ${m3.x},${m3.y}`);
+    mark.setAttribute('class', placeholder ? 'right-angle-mark placeholder' : 'right-angle-mark');
+    svg.appendChild(mark);
+  }
 
   // Angle labels (α, β, γ), offset outward past each vertex so they never
   // sit on top of the triangle's edges.
@@ -231,6 +252,7 @@ function drawTriangle(svg, sides, angles, { placeholder = false } = {}) {
 // ---- UI wiring ----
 
 const svg = document.getElementById('triangle-svg');
+const triangleWrap = document.getElementById('triangle-wrap');
 const statusEl = document.getElementById('status');
 const resetBtn = document.getElementById('reset-btn');
 const solutionToggle = document.getElementById('solution-toggle');
@@ -270,7 +292,7 @@ let selectedSolution = 0;
 
 const PLACEHOLDER_SIDES = [3, 4, 5];
 const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
-const DEFAULT_GIVEN = { gamma: '90' };
+const DEFAULT_GIVEN = { gamma: '90.0' };
 
 function setStatus(message, kind) {
   statusEl.textContent = message || '';
