@@ -289,6 +289,7 @@ const FIELD_KEYS = Object.keys(FIELD_META);
 let givenFields = new Set();
 let lastAmbiguous = null;
 let selectedSolution = 0;
+let gammaIsDefault = true; // true until the user actually edits γ themselves
 
 const PLACEHOLDER_SIDES = [3, 4, 5];
 const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
@@ -351,21 +352,60 @@ function showSolution(sides, angles, { placeholder = false } = {}) {
   if (!placeholder) fillComputed(sides, angles);
 }
 
+/**
+ * When the size isn't known yet but all 3 angles currently are (given and/or
+ * auto-filled), draw the diagram with the real angles at an arbitrary scale —
+ * so the shape (and the right-angle mark, if any) reflects reality even
+ * before a side makes the size solvable.
+ */
+function currentAngleShape() {
+  const vals = ['alpha', 'beta', 'gamma'].map((k) => parseFloat(inputEls[k].value));
+  const validAngles = vals.every((v) => v > 0 && v < 180) && Math.abs(vals[0] + vals[1] + vals[2] - 180) < 0.5;
+  if (!validAngles) return { sides: PLACEHOLDER_SIDES, angles: PLACEHOLDER_ANGLES };
+  const ratio = 5 / Math.sin(toRad(vals[2]));
+  const sides = [ratio * Math.sin(toRad(vals[0])), ratio * Math.sin(toRad(vals[1])), 5];
+  return { sides, angles: vals };
+}
+
 function recompute() {
+  // If γ still holds its untouched 90° default but the user has independently
+  // pinned both other angles themselves, let γ be computed instead of
+  // blocking on a stale default (i.e. they've moved away from a right triangle).
+  if (gammaIsDefault && givenFields.has('gamma') && givenFields.has('alpha') && givenFields.has('beta')) {
+    givenFields.delete('gamma');
+  }
+
   markFieldStyles();
   clearComputedFields();
   solutionToggle.hidden = true;
   lastAmbiguous = null;
 
+  // Whenever exactly 2 of the 3 angles are known, the 3rd follows for free
+  // (angles always sum to 180°) — show it even if a side is still needed
+  // before the triangle's size can be fully solved.
+  const angleKeys = ['alpha', 'beta', 'gamma'];
+  const knownAngleKeys = angleKeys.filter((k) => givenFields.has(k));
+  if (knownAngleKeys.length === 2) {
+    const missing = angleKeys.find((k) => !knownAngleKeys.includes(k));
+    const sum = knownAngleKeys.reduce((s, k) => s + parseFloat(inputEls[k].value), 0);
+    const value = 180 - sum;
+    if (value > 0 && value < 180) {
+      inputEls[missing].value = fmtAngle(value);
+      setFieldClass(missing, 'computed', true);
+    }
+  }
+
   const known = givenFields.size;
   if (known < 3) {
     setStatus('');
-    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    const shape = currentAngleShape();
+    showSolution(shape.sides, shape.angles, { placeholder: true });
     return;
   }
   if (known > 3) {
     setStatus('För många värden — töm ett fält.', 'error');
-    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    const shape = currentAngleShape();
+    showSolution(shape.sides, shape.angles, { placeholder: true });
     return;
   }
 
@@ -384,11 +424,13 @@ function recompute() {
     showSolution(result.solutions[0].sides, result.solutions[0].angles);
   } else {
     setStatus(result.message, 'error');
-    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
+    const shape = currentAngleShape();
+    showSolution(shape.sides, shape.angles, { placeholder: true });
   }
 }
 
 function handleFieldInput(key) {
+  if (key === 'gamma') gammaIsDefault = false;
   const raw = inputEls[key].value.trim();
   if (raw === '' || Number.isNaN(parseFloat(raw))) givenFields.delete(key);
   else givenFields.add(key);
@@ -402,6 +444,7 @@ function resetToDefault() {
     setFieldClass(key, 'computed', false);
   }
   givenFields = new Set(Object.keys(DEFAULT_GIVEN));
+  gammaIsDefault = true;
   recompute();
 }
 
