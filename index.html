@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pythagoras</title>
-  <meta name="description" content="Räkna ut sidor och vinklar i en rätvinklig triangel." />
+  <meta name="description" content="Räkna ut sidor och vinklar i en triangel." />
 
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -18,26 +18,61 @@
 </head>
 <body>
   <main class="app">
-    <div class="triangle-wrap" id="triangle-wrap">
+    <div class="triangle-wrap">
       <svg id="triangle-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Triangeldiagram"></svg>
+    </div>
 
-      <input id="input-a" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
-      <input id="input-b" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Katet" />
-      <input id="input-c" class="tri-input tri-input-standalone" type="number" inputmode="decimal" step="any" min="0" aria-label="Hypotenusa" />
-
-      <div class="tri-angle-wrap" id="wrap-alpha">
-        <input id="input-alpha" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
-        <span class="deg-suffix">°</span>
-      </div>
-      <div class="tri-angle-wrap" id="wrap-beta">
-        <input id="input-beta" class="tri-input tri-input-angle" type="number" inputmode="decimal" step="any" min="0" max="89.99" aria-label="Vinkel" />
-        <span class="deg-suffix">°</span>
-      </div>
+    <div id="solution-toggle" class="solution-toggle" hidden>
+      <button type="button" class="active" data-solution="0">Lösning 1</button>
+      <button type="button" data-solution="1">Lösning 2</button>
     </div>
 
     <p id="status" class="status" role="status" aria-live="polite"></p>
 
-    <button type="button" id="reset-btn" class="reset-btn">Töm</button>
+    <form class="inputs" autocomplete="off">
+      <fieldset>
+        <legend>Sidor</legend>
+        <div class="field">
+          <label for="input-a">a</label>
+          <input id="input-a" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+        </div>
+        <div class="field">
+          <label for="input-b">b</label>
+          <input id="input-b" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+        </div>
+        <div class="field">
+          <label for="input-c">c</label>
+          <input id="input-c" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Vinklar</legend>
+        <div class="field">
+          <label for="input-alpha">α</label>
+          <span class="angle-wrap" id="wrap-alpha">
+            <input id="input-alpha" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+            <span class="deg-suffix">°</span>
+          </span>
+        </div>
+        <div class="field">
+          <label for="input-beta">β</label>
+          <span class="angle-wrap" id="wrap-beta">
+            <input id="input-beta" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+            <span class="deg-suffix">°</span>
+          </span>
+        </div>
+        <div class="field">
+          <label for="input-gamma">γ</label>
+          <span class="angle-wrap" id="wrap-gamma">
+            <input id="input-gamma" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+            <span class="deg-suffix">°</span>
+          </span>
+        </div>
+      </fieldset>
+
+      <button type="button" id="reset-btn" class="reset-btn">Töm</button>
+    </form>
   </main>
 
   <script src="app.js"></script>

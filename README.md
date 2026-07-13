@@ -1,8 +1,7 @@
 # Pythagoras
 
-A small standalone PWA that solves a right triangle: enter any 2 of its 5
-remaining values (2 legs, the hypotenuse, 2 acute angles — the right angle is
-always fixed at 90°), and it fills in the rest. See
+A small standalone PWA that solves a triangle: enter any 3 of its 6 values (3 sides,
+3 angles), and it fills in the rest, redrawing the diagram to match. See
 [requirements.md](requirements.md) for the full spec.
 
 No build step — it's plain HTML/CSS/JS.

@@ -1,20 +1,15 @@
 'use strict';
 
 /*
- * Indexing convention: index 0/1/2 = a/b/c and alpha/beta/gamma.
- * Side i is always opposite angle i. Gamma (index 2) is permanently 90°:
- * this app only solves right triangles, so the app only ever asks for 2
- * of the remaining 5 values (a, b, c, alpha, beta) — gamma is the 3rd,
- * implicit, always-known value the solver needs.
- *
- * The diagram itself never changes shape — it's always the same fixed
- * 3-4-5 right triangle with the right angle at bottom-right. Only the
- * numbers shown in the 5 overlay inputs change as the user types.
+ * General triangle solver. Indexing convention: index 0/1/2 = a/b/c and
+ * alpha/beta/gamma. Side i is always opposite angle i. The user fills in
+ * any 3 of the 6 values (sides and/or angles); the other 3 are computed.
+ * The diagram redraws to the actual solved shape and just labels which
+ * side/angle is which — the real values live in the 6 fields below it.
  */
 
 const ANGLE_EPS = 1e-6; // degrees
 const RATIO_EPS = 1e-9;
-const RIGHT_ANGLE = 90;
 
 function toRad(deg) { return (deg * Math.PI) / 180; }
 function toDeg(rad) { return (rad * 180) / Math.PI; }
@@ -66,7 +61,7 @@ function solveTriangle(sidesIn, anglesIn) {
     }
     return {
       status: 'insufficient',
-      message: 'Vinklarna ger bara formen, inte storleken — fyll i en sida också.',
+      message: 'Tre vinklar ger bara formen, inte storleken — fyll i en sida också.',
     };
   }
 
@@ -109,7 +104,7 @@ function solveTriangle(sidesIn, anglesIn) {
       return { status: 'ok', sides, angles: lawOfCosinesAngles(sides) };
     }
 
-    // SSA: given angle is opposite one of the two known sides
+    // SSA: given angle is opposite one of the two known sides — ambiguous case
     const j = givenAngle;
     const k = knownSideIdx.find((i) => i !== j);
     const m = missingSide;
@@ -144,82 +139,93 @@ function solveTriangle(sidesIn, anglesIn) {
   return { status: 'error', message: 'Oväntad kombination av värden.' };
 }
 
+/** Place vertices A=(0,0), B=(c,0), C above the baseline. */
+function computePoints(sides, angles) {
+  const [, b] = sides;
+  const alpha = angles[0];
+  const A = { x: 0, y: 0 };
+  const B = { x: sides[2], y: 0 };
+  const C = { x: b * Math.cos(toRad(alpha)), y: -b * Math.sin(toRad(alpha)) };
+  return { A, B, C };
+}
+
 function normalize(v) {
   const len = Math.hypot(v.x, v.y) || 1;
   return { x: v.x / len, y: v.y / len };
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const DISPLAY_SIZE = 300;
+const PADDING = 55;
 
-// Fixed 3-4-5 triangle, right angle (C) at bottom-right. Never recomputed.
-// The long leg is vertical (and the short leg horizontal) so the diagram is
-// taller than it is wide — that leaves more horizontal margin on the sides
-// for the input fields on a typical (portrait) phone screen.
-const LEG_A = 160; // bottom edge B–C, opposite vertex A (short leg, horizontal)
-const LEG_B = 280; // right edge A–C, opposite vertex B (long leg, vertical)
-const PADDING = 180; // extra room around the shape for larger, easier-to-read inputs
-const FIXED_PTS = {
-  A: { x: LEG_A, y: 0 },
-  B: { x: 0, y: LEG_B },
-  C: { x: LEG_A, y: LEG_B },
-};
-const FIXED_VIEWBOX = { x0: -PADDING, y0: -PADDING, w: LEG_A + 2 * PADDING, h: LEG_B + 2 * PADDING };
-const FIXED_CENTROID = {
-  x: (FIXED_PTS.A.x + FIXED_PTS.B.x + FIXED_PTS.C.x) / 3,
-  y: (FIXED_PTS.A.y + FIXED_PTS.B.y + FIXED_PTS.C.y) / 3,
-};
+function computeLayout(sides, angles) {
+  const { A, B, C } = computePoints(sides, angles);
+  const rawPts = [A, B, C];
+  const minX = Math.min(...rawPts.map((p) => p.x));
+  const maxX = Math.max(...rawPts.map((p) => p.x));
+  const minY = Math.min(...rawPts.map((p) => p.y));
+  const maxY = Math.max(...rawPts.map((p) => p.y));
+  const rawW = Math.max(maxX - minX, 1e-6);
+  const rawH = Math.max(maxY - minY, 1e-6);
+  const scale = DISPLAY_SIZE / Math.max(rawW, rawH);
 
-function drawFixedTriangle(svg) {
-  svg.setAttribute('viewBox', `${FIXED_VIEWBOX.x0} ${FIXED_VIEWBOX.y0} ${FIXED_VIEWBOX.w} ${FIXED_VIEWBOX.h}`);
-  const { A, B, C } = FIXED_PTS;
+  const pts = rawPts.map((p) => ({ x: (p.x - minX) * scale, y: (p.y - minY) * scale }));
+  const w = rawW * scale;
+  const h = rawH * scale;
+  const centroid = {
+    x: (pts[0].x + pts[1].x + pts[2].x) / 3,
+    y: (pts[0].y + pts[1].y + pts[2].y) / 3,
+  };
 
-  const poly = document.createElementNS(SVG_NS, 'polygon');
-  poly.setAttribute('points', [A, B, C].map((p) => `${p.x},${p.y}`).join(' '));
-  poly.setAttribute('class', 'triangle-shape placeholder');
-  svg.appendChild(poly);
-
-  // Right-angle mark at C, tucked into the corner along its two edges
-  const dirCA = normalize({ x: A.x - C.x, y: A.y - C.y });
-  const dirCB = normalize({ x: B.x - C.x, y: B.y - C.y });
-  const markSize = 24;
-  const p1 = { x: C.x + dirCA.x * markSize, y: C.y + dirCA.y * markSize };
-  const p3 = { x: C.x + dirCB.x * markSize, y: C.y + dirCB.y * markSize };
-  const p2 = { x: p1.x + dirCB.x * markSize, y: p1.y + dirCB.y * markSize };
-  const mark = document.createElementNS(SVG_NS, 'polyline');
-  mark.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
-  mark.setAttribute('class', 'right-angle-mark');
-  svg.appendChild(mark);
-
-  return poly;
+  return { pts, centroid, viewBox: { x0: -PADDING, y0: -PADDING, w: w + 2 * PADDING, h: h + 2 * PADDING } };
 }
 
-function positionFixedInputs(inputEls) {
-  const { A, B, C } = FIXED_PTS;
-  const toPct = (p) => ({
-    left: ((p.x - FIXED_VIEWBOX.x0) / FIXED_VIEWBOX.w) * 100,
-    top: ((p.y - FIXED_VIEWBOX.y0) / FIXED_VIEWBOX.h) * 100,
+function addText(svg, x, y, str, cls) {
+  const t = document.createElementNS(SVG_NS, 'text');
+  t.setAttribute('x', x);
+  t.setAttribute('y', y);
+  t.setAttribute('class', cls);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('dominant-baseline', 'middle');
+  t.textContent = str;
+  svg.appendChild(t);
+}
+
+function drawTriangle(svg, sides, angles, { placeholder = false } = {}) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const layout = computeLayout(sides, angles);
+  const { viewBox, pts, centroid } = layout;
+  svg.setAttribute('viewBox', `${viewBox.x0} ${viewBox.y0} ${viewBox.w} ${viewBox.h}`);
+
+  const poly = document.createElementNS(SVG_NS, 'polygon');
+  poly.setAttribute('points', pts.map((p) => `${p.x},${p.y}`).join(' '));
+  poly.setAttribute('class', placeholder ? 'triangle-shape placeholder' : 'triangle-shape');
+  svg.appendChild(poly);
+
+  // Angle labels (α, β, γ), offset outward past each vertex so they never
+  // sit on top of the triangle's edges.
+  const angleLabels = ['α', 'β', 'γ'];
+  pts.forEach((p, i) => {
+    const dir = normalize({ x: p.x - centroid.x, y: p.y - centroid.y });
+    const pos = { x: p.x + dir.x * 30, y: p.y + dir.y * 30 };
+    addText(svg, pos.x, pos.y, angleLabels[i], placeholder ? 'angle-label placeholder' : 'angle-label');
   });
-  const mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
-  const away = (midpoint, opposite, dist) => {
-    const d = normalize({ x: midpoint.x - opposite.x, y: midpoint.y - opposite.y });
-    return { x: midpoint.x + d.x * dist, y: midpoint.y + d.y * dist };
-  };
-  const outward = (p, dist) => {
-    const d = normalize({ x: p.x - FIXED_CENTROID.x, y: p.y - FIXED_CENTROID.y });
-    return { x: p.x + d.x * dist, y: p.y + d.y * dist };
-  };
 
-  const setPos = (el, p) => {
-    const { left, top } = toPct(p);
-    el.style.left = `${left}%`;
-    el.style.top = `${top}%`;
-  };
+  // Side labels (a, b, c) at midpoints, offset away from the opposite vertex
+  const sideLabels = ['a', 'b', 'c'];
+  const pairs = [
+    [1, 2, 0], // side a connects pts[1]-pts[2], opposite pts[0]
+    [0, 2, 1], // side b connects pts[0]-pts[2], opposite pts[1]
+    [0, 1, 2], // side c connects pts[0]-pts[1], opposite pts[2]
+  ];
+  pairs.forEach(([p1, p2, opp], i) => {
+    const mid = { x: (pts[p1].x + pts[p2].x) / 2, y: (pts[p1].y + pts[p2].y) / 2 };
+    const away = normalize({ x: mid.x - pts[opp].x, y: mid.y - pts[opp].y });
+    const pos = { x: mid.x + away.x * 22, y: mid.y + away.y * 22 };
+    addText(svg, pos.x, pos.y, sideLabels[i], placeholder ? 'side-label placeholder' : 'side-label');
+  });
 
-  setPos(inputEls.a, away(mid(B, C), A, 100)); // side a connects B-C, opposite A
-  setPos(inputEls.b, away(mid(A, C), B, 100)); // side b connects A-C, opposite B
-  setPos(inputEls.c, away(mid(A, B), C, 100)); // side c (hypotenuse) connects A-B, opposite C
-  setPos(inputEls.alpha, outward(A, 100));
-  setPos(inputEls.beta, outward(B, 100));
+  return poly;
 }
 
 // ---- UI wiring ----
@@ -227,6 +233,7 @@ function positionFixedInputs(inputEls) {
 const svg = document.getElementById('triangle-svg');
 const statusEl = document.getElementById('status');
 const resetBtn = document.getElementById('reset-btn');
+const solutionToggle = document.getElementById('solution-toggle');
 
 const inputEls = {
   a: document.getElementById('input-a'),
@@ -234,16 +241,18 @@ const inputEls = {
   c: document.getElementById('input-c'),
   alpha: document.getElementById('input-alpha'),
   beta: document.getElementById('input-beta'),
+  gamma: document.getElementById('input-gamma'),
 };
 // Position/state target for each field: the input itself for sides, but the
-// wrapping element (input + °) for angles, so the ° suffix moves and styles
-// together with its input.
+// wrapping element (input + °) for angles, so the ° suffix styles together
+// with its input.
 const posEls = {
   a: inputEls.a,
   b: inputEls.b,
   c: inputEls.c,
   alpha: document.getElementById('wrap-alpha'),
   beta: document.getElementById('wrap-beta'),
+  gamma: document.getElementById('wrap-gamma'),
 };
 const FIELD_META = {
   a: { group: 'sides', index: 0 },
@@ -251,20 +260,20 @@ const FIELD_META = {
   c: { group: 'sides', index: 2 },
   alpha: { group: 'angles', index: 0 },
   beta: { group: 'angles', index: 1 },
+  gamma: { group: 'angles', index: 2 },
 };
 const FIELD_KEYS = Object.keys(FIELD_META);
 
 let givenFields = new Set();
-const trianglePoly = drawFixedTriangle(svg);
-positionFixedInputs(posEls);
+let lastAmbiguous = null;
+let selectedSolution = 0;
+
+const PLACEHOLDER_SIDES = [3, 4, 5];
+const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
 
 function setStatus(message, kind) {
   statusEl.textContent = message || '';
   statusEl.className = kind ? `status ${kind}` : 'status';
-}
-
-function setSolved(isSolved) {
-  trianglePoly.classList.toggle('placeholder', !isSolved);
 }
 
 function setFieldClass(key, cls, on) {
@@ -274,7 +283,7 @@ function setFieldClass(key, cls, on) {
 
 function readGivenValues() {
   const sides = [null, null, null];
-  const angles = [null, null, RIGHT_ANGLE];
+  const angles = [null, null, null];
   for (const key of givenFields) {
     const meta = FIELD_META[key];
     const value = parseFloat(inputEls[key].value);
@@ -307,26 +316,33 @@ function fillComputed(sides, angles) {
     inputEls[key].value = fmt(sides[i]);
     setFieldClass(key, 'computed', true);
   });
-  ['alpha', 'beta'].forEach((key, i) => {
+  ['alpha', 'beta', 'gamma'].forEach((key, i) => {
     if (givenFields.has(key)) return;
     inputEls[key].value = fmtAngle(angles[i]);
     setFieldClass(key, 'computed', true);
   });
 }
 
+function showSolution(sides, angles, { placeholder = false } = {}) {
+  drawTriangle(svg, sides, angles, { placeholder });
+  if (!placeholder) fillComputed(sides, angles);
+}
+
 function recompute() {
   markFieldStyles();
   clearComputedFields();
+  solutionToggle.hidden = true;
+  lastAmbiguous = null;
 
   const known = givenFields.size;
-  if (known < 2) {
-    setStatus('');
-    setSolved(false);
+  if (known < 3) {
+    setStatus(`Fyll i ${3 - known} värde${3 - known === 1 ? '' : 'n'} till (valfri blandning av sidor och vinklar).`);
+    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
-  if (known > 2) {
+  if (known > 3) {
     setStatus('För många värden — töm ett fält.', 'error');
-    setSolved(false);
+    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
 
@@ -335,17 +351,17 @@ function recompute() {
 
   if (result.status === 'ok') {
     setStatus('');
-    setSolved(true);
-    fillComputed(result.sides, result.angles);
+    showSolution(result.sides, result.angles);
   } else if (result.status === 'ambiguous') {
-    // Not reachable with a fixed right angle, but handled defensively.
-    const sol = result.solutions[0];
-    setStatus('');
-    setSolved(true);
-    fillComputed(sol.sides, sol.angles);
+    lastAmbiguous = result;
+    selectedSolution = 0;
+    solutionToggle.hidden = false;
+    solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', Number(b.dataset.solution) === 0));
+    setStatus('Två trianglar uppfyller dessa värden — välj en lösning nedan.', 'ambiguous');
+    showSolution(result.solutions[0].sides, result.solutions[0].angles);
   } else {
     setStatus(result.message, 'error');
-    setSolved(false);
+    showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
   }
 }
 
@@ -370,6 +386,16 @@ FIELD_KEYS.forEach((key) => {
   inputEls[key].addEventListener('input', () => handleFieldInput(key));
 });
 resetBtn.addEventListener('click', handleReset);
+
+solutionToggle.querySelectorAll('button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (!lastAmbiguous) return;
+    selectedSolution = Number(btn.dataset.solution);
+    solutionToggle.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+    const sol = lastAmbiguous.solutions[selectedSolution];
+    showSolution(sol.sides, sol.angles);
+  });
+});
 
 recompute();
 
