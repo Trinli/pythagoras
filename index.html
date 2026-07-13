@@ -9,9 +9,9 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#f4f6fb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Pythagoras" />
 
   <link rel="stylesheet" href="style.css" />
@@ -30,46 +30,48 @@
     <p id="status" class="status" role="status" aria-live="polite"></p>
 
     <form class="inputs" autocomplete="off">
-      <fieldset>
-        <legend>Sidor</legend>
-        <div class="field">
-          <label for="input-a">a</label>
-          <input id="input-a" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
-        </div>
-        <div class="field">
-          <label for="input-b">b</label>
-          <input id="input-b" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
-        </div>
-        <div class="field">
-          <label for="input-c">c</label>
-          <input id="input-c" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
-        </div>
-      </fieldset>
+      <div class="input-columns">
+        <fieldset>
+          <legend>Sidor</legend>
+          <div class="field">
+            <label for="input-a">a</label>
+            <input id="input-a" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+          </div>
+          <div class="field">
+            <label for="input-b">b</label>
+            <input id="input-b" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+          </div>
+          <div class="field">
+            <label for="input-c">c</label>
+            <input id="input-c" type="number" inputmode="decimal" step="any" min="0" placeholder="längd" />
+          </div>
+        </fieldset>
 
-      <fieldset>
-        <legend>Vinklar</legend>
-        <div class="field">
-          <label for="input-alpha">α</label>
-          <span class="angle-wrap" id="wrap-alpha">
-            <input id="input-alpha" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
-            <span class="deg-suffix">°</span>
-          </span>
-        </div>
-        <div class="field">
-          <label for="input-beta">β</label>
-          <span class="angle-wrap" id="wrap-beta">
-            <input id="input-beta" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
-            <span class="deg-suffix">°</span>
-          </span>
-        </div>
-        <div class="field">
-          <label for="input-gamma">γ</label>
-          <span class="angle-wrap" id="wrap-gamma">
-            <input id="input-gamma" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
-            <span class="deg-suffix">°</span>
-          </span>
-        </div>
-      </fieldset>
+        <fieldset>
+          <legend>Vinklar</legend>
+          <div class="field">
+            <label for="input-alpha">α</label>
+            <span class="angle-wrap" id="wrap-alpha">
+              <input id="input-alpha" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+              <span class="deg-suffix">°</span>
+            </span>
+          </div>
+          <div class="field">
+            <label for="input-beta">β</label>
+            <span class="angle-wrap" id="wrap-beta">
+              <input id="input-beta" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+              <span class="deg-suffix">°</span>
+            </span>
+          </div>
+          <div class="field">
+            <label for="input-gamma">γ</label>
+            <span class="angle-wrap" id="wrap-gamma">
+              <input id="input-gamma" type="number" inputmode="decimal" step="any" min="0" max="179.9" placeholder="grader" />
+              <span class="deg-suffix">°</span>
+            </span>
+          </div>
+        </fieldset>
+      </div>
 
       <button type="button" id="reset-btn" class="reset-btn">Töm</button>
     </form>

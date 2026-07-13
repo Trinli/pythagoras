@@ -270,6 +270,7 @@ let selectedSolution = 0;
 
 const PLACEHOLDER_SIDES = [3, 4, 5];
 const PLACEHOLDER_ANGLES = lawOfCosinesAngles(PLACEHOLDER_SIDES);
+const DEFAULT_GIVEN = { gamma: '90' };
 
 function setStatus(message, kind) {
   statusEl.textContent = message || '';
@@ -336,7 +337,7 @@ function recompute() {
 
   const known = givenFields.size;
   if (known < 3) {
-    setStatus(`Fyll i ${3 - known} värde${3 - known === 1 ? '' : 'n'} till (valfri blandning av sidor och vinklar).`);
+    setStatus('');
     showSolution(PLACEHOLDER_SIDES, PLACEHOLDER_ANGLES, { placeholder: true });
     return;
   }
@@ -372,20 +373,20 @@ function handleFieldInput(key) {
   recompute();
 }
 
-function handleReset() {
+function resetToDefault() {
   for (const key of FIELD_KEYS) {
-    inputEls[key].value = '';
+    inputEls[key].value = DEFAULT_GIVEN[key] || '';
     setFieldClass(key, 'given', false);
     setFieldClass(key, 'computed', false);
   }
-  givenFields = new Set();
+  givenFields = new Set(Object.keys(DEFAULT_GIVEN));
   recompute();
 }
 
 FIELD_KEYS.forEach((key) => {
   inputEls[key].addEventListener('input', () => handleFieldInput(key));
 });
-resetBtn.addEventListener('click', handleReset);
+resetBtn.addEventListener('click', resetToDefault);
 
 solutionToggle.querySelectorAll('button').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -397,7 +398,7 @@ solutionToggle.querySelectorAll('button').forEach((btn) => {
   });
 });
 
-recompute();
+resetToDefault();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
